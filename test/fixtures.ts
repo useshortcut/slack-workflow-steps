@@ -11,10 +11,6 @@ export const SAM = "11110000-0000-4000-8000-000000000002";
 export const PRIORITY = "22220000-0000-4000-8000-000000000001";
 export const HIGH = "22220000-0000-4000-8000-000000000012";
 
-/**
- * Workflow states are numbered by workflow: Engineering 50x, Design 60x,
- * Infrastructure 70x. "Ready for Dev" and "Done" exist in more than one.
- */
 export const acme: FakeWorkspace = {
   workflows: [
     {

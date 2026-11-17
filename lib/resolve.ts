@@ -1,18 +1,9 @@
-// Pure rules that turn what a workflow builder typed into v4 IDs.
-// No I/O here: callers fetch the candidate lists, these functions decide.
 import { StepError } from "./step.ts";
 import type { CustomField, Member, Project, Ref, Team } from "./shortcut.ts";
 import type { SlackUser } from "./slack.ts";
 
 type Named = { id: string | number; name: string };
 
-/**
- * The one matching rule for every named thing: team, project, workflow, state,
- * and priority value. The input must equal a candidate's ID, name, or one of
- * its `aliases`, ignoring case. No prefixes and no fuzzy scores, because a
- * step runs unattended for months and a wrong guess files a story in the
- * wrong place without telling anyone.
- */
 export function pickOne<T extends Named>(
   kind: string,
   input: string,
@@ -49,10 +40,6 @@ export function pickOne<T extends Named>(
 export const teamAliases = (t: Team) =>
   t.mention_name ? [t.mention_name, `@${t.mention_name}`] : [];
 
-/**
- * "Ready for Dev" names a state in the story's workflow.
- * "Engineering / Ready for Dev" names the workflow too.
- */
 export function parseStateInput(
   input: string,
 ): { workflow?: string; state: string } {
@@ -61,13 +48,7 @@ export function parseStateInput(
   return { workflow: input.slice(0, at), state: input.slice(at + 3) };
 }
 
-/**
- * The workflow a story's state is looked up in, first match wins:
- *   1. the workflow named in "Workflow / State"
- *   2. the project's workflow, because v4 rejects a state outside it
- *   3. the team's default workflow
- *   4. the workspace's default workflow
- */
+/** v4 rejects a story whose state is outside its project's workflow. */
 export function workflowFor(
   named: Ref | undefined,
   project: Project | undefined,
@@ -78,7 +59,6 @@ export function workflowFor(
     workspaceDefault;
 }
 
-/** Accepts 123, #123, sc-123, [sc-123], or a story link. */
 export function parseStoryRef(input: string, slug: string): number {
   const text = input.trim();
   const number = /^\[?(?:#|sc-)?(\d+)\]?$/i.exec(text);
@@ -101,10 +81,7 @@ export function parseStoryRef(input: string, slug: string): number {
   return Number(link[2]);
 }
 
-/**
- * The Shortcut member with the Slack user's email, ignoring case.
- * The members list leaves out disabled members, so one reads as missing.
- */
+/** The members list leaves out disabled members, so one reads as missing. */
 export function memberFor(
   members: Member[],
   user: SlackUser,

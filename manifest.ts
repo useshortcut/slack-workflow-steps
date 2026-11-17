@@ -9,6 +9,5 @@ export default Manifest({
   icon: "assets/icon.png",
   functions: [CreateStory, AddComment],
   outgoingDomains: [SHORTCUT_HOST],
-  // users:read.email matches a Slack user to the Shortcut member with the same email.
   botScopes: ["users:read", "users:read.email"],
 });

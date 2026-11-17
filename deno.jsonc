@@ -2,8 +2,6 @@
   "$schema": "https://raw.githubusercontent.com/denoland/deno/main/cli/schemas/config-file.v1.json",
   "lock": false,
   "tasks": {
-    // The tests check every request against Shortcut's live v4 OpenAPI
-    // document. Set SHORTCUT_OPENAPI_FILE to a saved copy to run offline.
     "test": "deno fmt --check && deno lint && deno check && deno test --allow-read --allow-env=SHORTCUT_OPENAPI_FILE --allow-net=api.app.shortcut.com"
   },
   "imports": {

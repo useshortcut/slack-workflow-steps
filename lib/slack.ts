@@ -1,9 +1,7 @@
 import { StepError } from "./step.ts";
 
-/** `email` is null for bots and for users whose email Slack doesn't share. */
 export type SlackUser = { id: string; name: string; email: string | null };
 
-/** The part of Slack's API client this app uses. */
 export type SlackUsers = {
   users: {
     info(args: { user: string }): Promise<{
@@ -14,7 +12,6 @@ export type SlackUsers = {
   };
 };
 
-/** Reads a Slack user's name and email (bot scopes users:read, users:read.email). */
 export async function slackUser(
   client: SlackUsers,
   id: string,

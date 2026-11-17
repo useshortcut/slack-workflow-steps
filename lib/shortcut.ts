@@ -1,14 +1,10 @@
-// The only code that talks to Shortcut's REST API v4.
-// https://developer.shortcut.com/api/rest/v4
 import { StepError } from "./step.ts";
 
 export const SHORTCUT_HOST = "api.app.shortcut.com";
 const API = `https://${SHORTCUT_HOST}/api/v4`;
 
-/** The scope a step writes with. A "write" token has both. */
 export type WriteScope = "story-write" | "comment-write";
 
-// Narrow views of v4 entities: only the fields these steps read.
 export type Ref = { id: number; name: string };
 export type Team = {
   id: string;
@@ -25,7 +21,6 @@ export type CustomField = {
   values: { id: string; value: string; enabled: boolean }[] | null;
 };
 
-/** Body of v4 operation createStory, limited to the fields these steps set. */
 export type CreateStoryBody = {
   name: string;
   workflow_state_id: number;
@@ -47,11 +42,9 @@ type Lists = {
   workflows: Ref;
 };
 
-/** A client bound to the one workspace the token belongs to. */
 export type Shortcut = {
   workspace: { slug: string; name: string };
   defaultWorkflow: Ref;
-  /** Every active, unarchived item of a kind. */
   list<K extends keyof Lists>(kind: K): Promise<Lists[K][]>;
   states(workflowId: number): Promise<Ref[]>;
   defaultStateId(workflowId: number): Promise<number>;
@@ -66,10 +59,6 @@ type Whoami = {
   authorization: { scopes: string[] };
 };
 
-/**
- * Checks the token, reads /whoami for the workspace and its defaults, and
- * refuses up front when the token can't make the step's write.
- */
 export async function connect(
   token: string | undefined,
   scope: WriteScope,
@@ -106,8 +95,6 @@ export async function connect(
     return items;
   };
 
-  // Every v4 GET, /whoami included, needs "read". A token with no scopes
-  // predates scopes and may do anything.
   const needs =
     `This step needs a token with the scopes "read", plus "write" or "${scope}". Create one and run: slack env add SHORTCUT_API_TOKEN <token>`;
   const whoamiUrl = `${API}/whoami`;
@@ -169,12 +156,6 @@ export async function connect(
   };
 }
 
-/**
- * Sends one request and turns the failures no caller can act on into
- * messages. `write` names what a POST creates: Shortcut may have created it
- * even when the response is lost, and v4 has no idempotency key, so a write
- * never tells the user to simply run the workflow again.
- */
 async function send(
   token: string,
   method: "GET" | "POST",

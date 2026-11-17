@@ -1,7 +1,3 @@
-// A fake Shortcut workspace (and Slack's users.info) behind globalThis.fetch.
-// Every request a step sends, and every reply the fake gives, is checked
-// against Shortcut's published v4 OpenAPI document, so a field v4 doesn't
-// accept fails the test that sent it.
 import { Ajv } from "ajv";
 import { stub } from "@std/testing/mock";
 
@@ -10,7 +6,6 @@ const SLUG = "acme";
 
 export type FakeWorkspace = {
   scopes?: string[];
-  /** The first is the workspace default. Each workflow's first state is its default. */
   workflows: { id: number; name: string; states: [number, string][] }[];
   teams?: {
     id: string;
@@ -28,11 +23,9 @@ export type FakeWorkspace = {
     values: { id: string; value: string; enabled: boolean }[];
   }[];
   slackUsers?: Record<string, { name: string; email?: string }>;
-  /** Replaces the reply to "METHOD /path?query" with a bare status, or a dropped connection. */
   failures?: Record<string, number | "network">;
 };
 
-/** One request to Shortcut. `path` drops the API prefix and workspace slug. */
 export type Sent = { method: string; path: string; body?: unknown };
 
 type Spec = {
@@ -51,10 +44,6 @@ const realFetch = globalThis.fetch;
 const dropped = new TypeError("connection reset");
 let contract: Promise<Contract> | undefined;
 
-/**
- * Shortcut's v4 OpenAPI document: the file at $SHORTCUT_OPENAPI_FILE when
- * set, otherwise the live document, fetched once per test run.
- */
 function loadContract(): Promise<Contract> {
   contract ??= (async () => {
     const file = Deno.env.get("SHORTCUT_OPENAPI_FILE");
@@ -92,7 +81,6 @@ class Contract {
     }
   }
 
-  /** Problems with a request, in words a failing test can show. */
   checkRequest(method: string, url: URL, body: unknown): string[] {
     const found = this.#find(method, url);
     if (!found) return [`v4 has no operation ${method} ${url.pathname}`];
@@ -134,7 +122,6 @@ class Contract {
     return problems;
   }
 
-  /** Problems with a reply. Statuses v4 documents no schema for pass. */
   checkResponse(
     method: string,
     url: URL,
@@ -157,7 +144,6 @@ class Contract {
     }
   }
 
-  /** The JSON schema of a request body or reply, found from the operation. */
   #json(part: Content | Ref | undefined): object | undefined {
     if (part && "$ref" in part) {
       const [, kind, name] = part.$ref.replace("spec#/", "").split("/");
@@ -176,11 +162,7 @@ class Contract {
   }
 }
 
-/**
- * The spec is OpenAPI 3.0. Ajv needs its component refs pointed at the schema
- * registered as "spec", and a nullable $ref spelled out, since OpenAPI ignores
- * keywords beside a $ref and Ajv does not.
- */
+/** A nullable $ref is spelled out, since OpenAPI ignores keywords beside a $ref and Ajv does not. */
 function forAjv(node: unknown): unknown {
   if (Array.isArray(node)) return node.map(forAjv);
   if (typeof node !== "object" || node === null) return node;
@@ -194,12 +176,6 @@ function forAjv(node: unknown): unknown {
   return out;
 }
 
-/**
- * Replaces globalThis.fetch with the fake until disposed. `sent` lists every
- * request to Shortcut in order. Lists come two entities per page, so every
- * lookup pages through `next_page_url`. A request or reply outside the v4
- * contract fails the test when the fake is disposed.
- */
 export async function fakeShortcut(
   ws: FakeWorkspace,
 ): Promise<Disposable & { sent: Sent[] }> {

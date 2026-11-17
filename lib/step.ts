@@ -4,11 +4,6 @@
  */
 export class StepError extends Error {}
 
-/**
- * The one place a step turns a failure into Slack's `{ error }` result.
- * A StepError passes its message through. Anything else is a bug in this app,
- * so its stack goes to the log that `slack activity` shows.
- */
 export async function runStep<O>(
   body: () => Promise<O>,
 ): Promise<{ outputs: O } | { error: string }> {
