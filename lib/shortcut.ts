@@ -159,12 +159,12 @@ async function send(
   method: "GET" | "POST",
   url: string,
   body?: unknown,
-  write?: "story" | "comment",
+  creates?: "story" | "comment",
 ): Promise<Response> {
   const unavailable = (detail: string | number) =>
     new StepError(
-      write
-        ? `Shortcut did not confirm the ${write} (${detail}). It may have been created anyway. Check Shortcut before you run the workflow again.`
+      creates
+        ? `Shortcut did not confirm the ${creates} (${detail}). It may have been created anyway. Check Shortcut before you run the workflow again.`
         : `Shortcut is unavailable (${detail}). Rerun the workflow later.`,
     );
 
