@@ -139,6 +139,19 @@ Deno.test("a project's workflow wins over the team's", async () => {
   });
 });
 
+Deno.test("a named workflow that isn't the project's is refused before posting", async () => {
+  const { result, posts } = await run({
+    title: "t",
+    project: "Billing",
+    workflow_state: "Design / Ready for Review",
+  });
+  assertEquals(result, {
+    error:
+      'Workflow "Design" doesn\'t match project "Billing", which uses workflow "Engineering". Leave the workflow out of Workflow state, or choose a state in "Engineering".',
+  });
+  assertEquals(posts, []);
+});
+
 Deno.test("a project is matched by ID", async () => {
   const { body } = await run({ title: "t", project: "12" });
   assertEquals(body, { name: "t", workflow_state_id: 500, project_id: 12 });

@@ -55,7 +55,13 @@ export function workflowFor(
   team: Team | undefined,
   workspaceDefault: Ref,
 ): Ref {
-  return named ?? project?.workflow ?? team?.default_workflow ??
+  const projectWorkflow = project?.workflow;
+  if (named && projectWorkflow && named.id !== projectWorkflow.id) {
+    throw new StepError(
+      `Workflow "${named.name}" doesn't match project "${project.name}", which uses workflow "${projectWorkflow.name}". Leave the workflow out of Workflow state, or choose a state in "${projectWorkflow.name}".`,
+    );
+  }
+  return named ?? projectWorkflow ?? team?.default_workflow ??
     workspaceDefault;
 }
 
