@@ -349,8 +349,8 @@ Deno.test("a token without read is refused at /whoami", async () => {
   assertEquals(sent.map((r) => r.path), ["/whoami"]);
 });
 
-Deno.test("write, story-write, or no scopes at all can create stories", async () => {
-  for (const scopes of [["read", "write"], ["read", "story-write"], []]) {
+Deno.test("write or story-write can create stories", async () => {
+  for (const scopes of [["read", "write"], ["read", "story-write"]]) {
     const { result } = await run({ title: "t", team: "Infra" }, {
       ...acme,
       scopes,

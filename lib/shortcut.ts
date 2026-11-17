@@ -104,9 +104,7 @@ export async function connect(
   }
   const me = (await parse<{ entity: Whoami }>(whoami, whoamiUrl)).entity;
   const scopes = me.authorization.scopes;
-  if (
-    scopes.length > 0 && !scopes.includes("write") && !scopes.includes(scope)
-  ) {
+  if (!scopes.includes("write") && !scopes.includes(scope)) {
     throw new StepError(
       `The Shortcut token has scopes: ${scopes.join(", ")}. ${needs}`,
     );
