@@ -12,10 +12,12 @@ export const PRIORITY = "22220000-0000-4000-8000-000000000001";
 export const HIGH = "22220000-0000-4000-8000-000000000012";
 
 export const acme: FakeWorkspace = {
+  defaultWorkflow: 1,
   workflows: [
     {
       id: 1,
       name: "Engineering",
+      defaultState: 500,
       states: [
         [500, "Unstarted"],
         [501, "Ready for Dev"],
@@ -26,11 +28,13 @@ export const acme: FakeWorkspace = {
     {
       id: 2,
       name: "Design",
+      defaultState: 600,
       states: [[600, "Backlog"], [601, "Ready for Review"], [602, "Done"]],
     },
     {
       id: 3,
       name: "Infrastructure",
+      defaultState: 700,
       states: [[700, "Inbox"], [701, "Ready for Dev"], [702, "Done"]],
     },
   ],

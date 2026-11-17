@@ -3,10 +3,18 @@ import { stub } from "@std/testing/mock";
 
 const API = "https://api.app.shortcut.com/api/v4";
 const SLUG = "acme";
+/** Short fixture lists still span pages, whatever limit the client asks for. */
+const PAGE_SIZE = 2;
 
 export type FakeWorkspace = {
   scopes?: string[];
-  workflows: { id: number; name: string; states: [number, string][] }[];
+  defaultWorkflow: number;
+  workflows: {
+    id: number;
+    name: string;
+    defaultState: number;
+    states: [number, string][];
+  }[];
   teams?: {
     id: string;
     name: string;
@@ -183,9 +191,13 @@ export async function fakeShortcut(
   const sent: Sent[] = [];
   const violations: string[] = [];
 
-  const slim = (id: number) => {
+  const workflowById = (id: number) => {
     const wf = ws.workflows.find((w) => w.id === id);
     if (!wf) throw new Error(`fixture has no workflow ${id}`);
+    return wf;
+  };
+  const slim = (id: number) => {
+    const wf = workflowById(id);
     return {
       entity_type: "workflow:slim",
       id,
@@ -193,13 +205,22 @@ export async function fakeShortcut(
       uri: `${API}/${SLUG}/workflows/${id}`,
     };
   };
-  const defaultState = (wf: FakeWorkspace["workflows"][number]) => ({
-    entity_type: "workflow-state:slim",
-    id: wf.states[0][0],
-    name: wf.states[0][1],
-    uri: `${API}/${SLUG}/workflow-states/${wf.states[0][0]}`,
-    workflow_name: wf.name,
-  });
+  const defaultState = (wf: FakeWorkspace["workflows"][number]) => {
+    const state = wf.states.find(([id]) => id === wf.defaultState);
+    if (!state) {
+      throw new Error(
+        `fixture workflow ${wf.id} has no state ${wf.defaultState}`,
+      );
+    }
+    const [id, name] = state;
+    return {
+      entity_type: "workflow-state:slim",
+      id,
+      name,
+      uri: `${API}/${SLUG}/workflow-states/${id}`,
+      workflow_name: wf.name,
+    };
+  };
   const workflow = (wf: FakeWorkspace["workflows"][number]) => ({
     entity_type: "workflow",
     id: wf.id,
@@ -248,17 +269,18 @@ export async function fakeShortcut(
   const page = (path: string, url: URL) => {
     const all = lists[path];
     const start = Number(url.searchParams.get("cursor") ?? 0);
-    const entities = all.slice(start, start + 2);
-    const next = start + 2 < all.length
-      ? { next_page_url: `${url.origin}${url.pathname}?cursor=${start + 2}` }
+    const end = start + PAGE_SIZE;
+    const entities = all.slice(start, end);
+    const next = end < all.length
+      ? { next_page_url: `${url.origin}${url.pathname}?cursor=${end}` }
       : {};
     return {
       $schema: `${API}/schemas/list`,
       entities,
       current_items: entities.length,
-      current_page: start / 2 + 1,
+      current_page: start / PAGE_SIZE + 1,
       total_items: all.length,
-      total_pages: Math.ceil(all.length / 2),
+      total_pages: Math.ceil(all.length / PAGE_SIZE),
       ...next,
     };
   };
@@ -269,7 +291,7 @@ export async function fakeShortcut(
 
   const reply = (method: string, path: string, url: URL, body: unknown) => {
     if (method === "GET" && path === "/whoami") {
-      const wf = ws.workflows[0];
+      const wf = workflowById(ws.defaultWorkflow);
       return [
         200,
         entity({
