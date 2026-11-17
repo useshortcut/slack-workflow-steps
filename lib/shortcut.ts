@@ -5,8 +5,8 @@ import { StepError } from "./step.ts";
 export const SHORTCUT_HOST = "api.app.shortcut.com";
 const API = `https://${SHORTCUT_HOST}/api/v4`;
 
-/** The scope a step writes with. A "write" token has it too. */
-export type WriteScope = "story-write";
+/** The scope a step writes with. A "write" token has both. */
+export type WriteScope = "story-write" | "comment-write";
 
 // Narrow views of v4 entities: only the fields these steps read.
 export type Ref = { id: number; name: string };
@@ -56,6 +56,7 @@ export type Shortcut = {
   states(workflowId: number): Promise<Ref[]>;
   defaultStateId(workflowId: number): Promise<number>;
   createStory(body: CreateStoryBody): Promise<{ id: number; app_url: string }>;
+  createComment(storyId: number, text: string): Promise<{ app_url: string }>;
 };
 
 type Whoami = {
@@ -149,6 +150,22 @@ export async function connect(
       }
       return (await res.json()).entity;
     },
+    createComment: async (storyId, text) => {
+      const url = `${base}/stories/${storyId}/comments`;
+      const res = await send(token, "POST", url, { text }, "comment");
+      if (res.status === 404) {
+        throw new StepError(
+          `Story ${storyId} not found in Shortcut workspace "${me.workspace.name}".`,
+        );
+      }
+      if (!res.ok) {
+        const reply = await excerpt(res);
+        throw new StepError(
+          `Shortcut rejected the comment (${res.status}): ${reply}`,
+        );
+      }
+      return (await res.json()).entity;
+    },
   };
 }
 
@@ -163,7 +180,7 @@ async function send(
   method: "GET" | "POST",
   url: string,
   body?: unknown,
-  write?: "story",
+  write?: "story" | "comment",
 ): Promise<Response> {
   const unavailable = (detail: string | number) =>
     new StepError(

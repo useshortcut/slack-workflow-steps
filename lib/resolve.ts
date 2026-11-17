@@ -78,6 +78,29 @@ export function workflowFor(
     workspaceDefault;
 }
 
+/** Accepts 123, #123, sc-123, [sc-123], or a story link. */
+export function parseStoryRef(input: string, slug: string): number {
+  const text = input.trim();
+  const number = /^\[?(?:#|sc-)?(\d+)\]?$/i.exec(text);
+  if (number) return Number(number[1]);
+  const link =
+    /^https?:\/\/app\.shortcut\.com\/([^/]+)\/story\/(\d+)(?:[/?#]|$)/i
+      .exec(text);
+  if (!link) {
+    throw new StepError(
+      `"${input}" is not a story. Use a story number (123), sc-123, or a story link.`,
+    );
+  }
+  if (link[1].toLowerCase() !== slug.toLowerCase()) {
+    throw new StepError(
+      `That story link is for workspace "${
+        link[1]
+      }", but SHORTCUT_API_TOKEN is for "${slug}".`,
+    );
+  }
+  return Number(link[2]);
+}
+
 /**
  * The Shortcut member with the Slack user's email, ignoring case.
  * The members list leaves out disabled members, so one reads as missing.
