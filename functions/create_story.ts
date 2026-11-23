@@ -1,7 +1,12 @@
 import { DefineFunction, Schema, SlackFunction } from "deno-slack-sdk/mod.ts";
 import { connect } from "../lib/shortcut.ts";
 import { runStep, StepError, trimmed } from "../lib/step.ts";
-import { findSlackUsers, slackUser } from "../lib/slack.ts";
+import {
+  findSlackUsers,
+  parseMessageLink,
+  slackMessageText,
+  slackUser,
+} from "../lib/slack.ts";
 import {
   parseSlackText,
   sourceLine,
@@ -32,13 +37,19 @@ export const CreateStory = DefineFunction({
         type: Schema.types.string,
         title: "Title",
         description:
-          "The step uses the first line, up to the end of its first sentence, and at most 512 characters.",
+          "The step uses the first line, up to the end of its first sentence, and at most 512 characters. Empty uses the Message.",
       },
       description: {
         type: Schema.types.string,
         title: "Description",
         description:
-          "Markdown. Slack mentions, channels, and links become Shortcut mentions and links.",
+          "Markdown. Slack mentions, channels, and links become Shortcut mentions and links. Empty uses the Message.",
+      },
+      message: {
+        type: Schema.types.string,
+        title: "Message",
+        description:
+          "A Slack message link, such as the reacted message's link. Fills an empty Title and Description, and the Source link.",
       },
       story_type: {
         type: Schema.types.string,
@@ -89,10 +100,10 @@ export const CreateStory = DefineFunction({
         type: Schema.types.string,
         title: "Source link",
         description:
-          "A link to the Slack message, such as the trigger's message link.",
+          "A link to the Slack message. Empty uses the Message link.",
       },
     },
-    required: ["title"],
+    required: [],
   },
   output_parameters: {
     properties: {
@@ -107,13 +118,12 @@ export default SlackFunction(
   CreateStory,
   ({ inputs, env, client, team_id }) =>
     runStep(async () => {
-      const titleText = parseSlackText(inputs.title);
+      const titleIn = trimmed(inputs.title);
       const descriptionIn = trimmed(inputs.description);
-      const descriptionText = descriptionIn
-        ? parseSlackText(descriptionIn)
-        : [];
-      const mentioned = userIds([...titleText, ...descriptionText]);
-      const sourceIn = trimmed(inputs.source_url);
+      const messageIn = trimmed(inputs.message);
+      if (!titleIn && !messageIn) throw new StepError("Set Title or Message.");
+      const message = messageIn ? parseMessageLink(messageIn) : undefined;
+      const sourceIn = trimmed(inputs.source_url) ?? message?.link;
       const source = sourceIn ? sourceLine(sourceIn) : undefined;
       const teamIn = trimmed(inputs.team);
       const projectIn = trimmed(inputs.project);
@@ -121,7 +131,18 @@ export default SlackFunction(
       const priorityIn = trimmed(inputs.priority);
       const { owner: ownerId, requester: requesterId } = inputs;
 
-      const sc = await connect(env.SHORTCUT_API_TOKEN, "story-write");
+      const [sc, messageText] = await Promise.all([
+        connect(env.SHORTCUT_API_TOKEN, "story-write"),
+        message && (!titleIn || !descriptionIn)
+          ? slackMessageText(client, message)
+          : undefined,
+      ]);
+      const titleText = parseSlackText(titleIn ?? messageText ?? "");
+      const descriptionMarkup = descriptionIn ?? messageText?.trim();
+      const descriptionText = descriptionMarkup
+        ? parseSlackText(descriptionMarkup)
+        : [];
+      const mentioned = userIds([...titleText, ...descriptionText]);
       const state = stateIn ? parseStateInput(stateIn) : undefined;
       const [
         teams,
@@ -144,7 +165,11 @@ export default SlackFunction(
       ]);
       const people = peopleFor(mentionedUsers, members);
       const title = storyTitle(toPlainText(titleText, people));
-      if (!title) throw new StepError("Title is empty.");
+      if (!title) {
+        throw new StepError(
+          titleIn ? "Title is empty." : "The message has no text. Set Title.",
+        );
+      }
 
       const where = `Shortcut workspace "${sc.workspace.name}"`;
       const team = teamIn
@@ -176,7 +201,7 @@ export default SlackFunction(
         name: title,
         workflow_state_id: stateId,
         description: [
-          descriptionIn && toMarkdown(descriptionText, people, team_id),
+          descriptionMarkup && toMarkdown(descriptionText, people, team_id),
           source,
         ].filter((p) => p).join("\n\n") || undefined,
         story_type: inputs.story_type,

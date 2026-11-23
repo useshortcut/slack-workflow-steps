@@ -9,5 +9,11 @@ export default Manifest({
   icon: "assets/icon.png",
   functions: [CreateStory, AddComment],
   outgoingDomains: [SHORTCUT_HOST],
-  botScopes: ["users:read", "users:read.email"],
+  botScopes: [
+    "users:read",
+    "users:read.email",
+    "channels:history",
+    "groups:history",
+    "channels:join",
+  ],
 });

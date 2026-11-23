@@ -34,6 +34,11 @@ export type FakeWorkspace = {
     values: { id: string; value: string; enabled: boolean }[];
   }[];
   slackUsers?: Record<string, { name: string; email?: string }>;
+  /** Messages by timestamp. The app is in a channel only if `joined` is true. */
+  slackChannels?: Record<
+    string,
+    { private?: boolean; joined?: boolean; messages: Record<string, string> }
+  >;
   failures?: Record<string, number | "network">;
 };
 
@@ -189,10 +194,14 @@ function forAjv(node: unknown): unknown {
 
 export async function fakeShortcut(
   ws: FakeWorkspace,
-): Promise<Disposable & { sent: Sent[]; slackLookups: string[] }> {
+): Promise<
+  Disposable & { sent: Sent[]; slackLookups: string[]; slackCalls: string[] }
+> {
   const spec = await loadContract();
   const sent: Sent[] = [];
   const slackLookups: string[] = [];
+  const slackCalls: string[] = [];
+  const joined = new Set<string>();
   const violations: string[] = [];
 
   const workflowById = (id: number) => {
@@ -403,6 +412,35 @@ export async function fakeShortcut(
     );
   };
 
+  const conversations = (method: string, body: URLSearchParams) => {
+    const id = body.get("channel") ?? "";
+    slackCalls.push(`${method} ${id}`);
+    const channel = ws.slackChannels?.[id];
+    if (!channel || (channel.private && !channel.joined)) {
+      return { ok: false, error: "channel_not_found" };
+    }
+    if (method === "conversations.join") {
+      joined.add(id);
+      return { ok: true };
+    }
+    if (!channel.joined && !joined.has(id)) {
+      return { ok: false, error: "not_in_channel" };
+    }
+    const ts = body.get("ts") ?? "";
+    const text = channel.messages[ts];
+    if (text === undefined) return { ok: false, error: "thread_not_found" };
+    // Slack lists a reply after its thread's parent, which here is the
+    // channel's first message.
+    const [parentTs, parentText] = Object.entries(channel.messages)[0];
+    const reply = { ts, text };
+    return {
+      ok: true,
+      messages: parentTs === ts
+        ? [reply]
+        : [{ ts: parentTs, text: parentText }, reply],
+    };
+  };
+
   const fetchStub = stub(
     globalThis,
     "fetch",
@@ -411,6 +449,11 @@ export async function fakeShortcut(
       const method = init?.method ?? "GET";
       if (url.href === "https://slack.com/api/users.info") {
         return Promise.resolve(slack(new URLSearchParams(String(init?.body))));
+      }
+      if (url.host === "slack.com" && url.pathname.startsWith("/api/conv")) {
+        const method = url.pathname.slice("/api/".length);
+        const body = new URLSearchParams(String(init?.body));
+        return Promise.resolve(Response.json(conversations(method, body)));
       }
       if (url.host !== "api.app.shortcut.com") {
         violations.push(`unexpected request to ${url.host}`);
@@ -431,6 +474,7 @@ export async function fakeShortcut(
   return {
     sent,
     slackLookups,
+    slackCalls,
     [Symbol.dispose]() {
       fetchStub.restore();
       if (violations.length) throw new Error(violations.join("\n"));

@@ -6,8 +6,8 @@ This Slack app adds two Shortcut steps to Slack Workflow Builder:
 - **Add a comment to a Shortcut story** posts a comment on a story and outputs
   the comment's link.
 
-A typical workflow starts from a Slack form, creates a story from the answers,
-and posts the story link back to the channel.
+A typical workflow starts when someone reacts to a message with an emoji,
+creates a story from the message, and posts the story link in the thread.
 
 > [!IMPORTANT]
 > Slack hosts this app for you. You don't need a server. You deploy it to your
@@ -104,7 +104,22 @@ To update the app later, run `git pull`, then run `slack deploy` again.
 
 ## Build a workflow
 
-This example files a bug from a Slack form.
+### File a story from an emoji reaction
+
+1. In Workflow Builder, start a workflow with the trigger **When an emoji
+   reaction is used**. Choose an emoji, such as 🎫, and a channel.
+2. Add the step **Create a Shortcut story**. Set **Message** to the trigger's
+   **Link to the message that was reacted to**. Leave **Title** and
+   **Description** empty. The step reads the message, makes its first sentence
+   the title and its whole text the description, and links back to it.
+3. Add a step that replies in the message's thread, and put the step's **Story
+   link** output in the reply.
+
+The app reads the message from Slack. It joins a public channel the first time
+it reads a message there. For a private channel, add the app to the channel
+first: click the channel's name, then **Integrations** > **Add apps**.
+
+### File a bug from a form
 
 1. In Workflow Builder, start a workflow from a link or a shortcut, and add a
    form step. Ask for a summary, the details, and a priority. Give the priority

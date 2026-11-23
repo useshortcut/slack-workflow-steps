@@ -108,4 +108,20 @@ export const acme: FakeWorkspace = {
     U_PAT: { name: "Pat Kim", email: "pat@elsewhere.com" },
     U_BOT: { name: "Deploy Bot" },
   },
+  slackChannels: {
+    C0SUPPORT: {
+      joined: true,
+      messages: {
+        "1700000000.000100":
+          "Login fails for <@U_JO>. See <https://status.acme.com|status>\nIt hangs &amp; times out",
+        "1700000000.000200": "Same on Safari",
+        "1700000000.000300": "",
+      },
+    },
+    C0RANDOM: { messages: { "1700000001.000100": "Search is slow" } },
+    G0SECRET: {
+      private: true,
+      messages: { "1700000002.000100": "Billing is wrong" },
+    },
+  },
 };

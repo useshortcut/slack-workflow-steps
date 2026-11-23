@@ -74,12 +74,10 @@ Deno.test("the title is the first sentence of the first line", async () => {
   assertEquals(body, { name: "Login fails on Safari", workflow_state_id: 500 });
 });
 
-Deno.test("an empty title is refused before posting", async () => {
-  for (const title of ["   ", "\n\n", ". Login fails"]) {
-    const { result, sent } = await run({ title });
-    assertEquals(result, { error: "Title is empty." }, title);
-    assertEquals(sent.map((r) => r.path), ["/whoami"], title);
-  }
+Deno.test("a title with nothing before its first sentence end is refused before posting", async () => {
+  const { result, sent } = await run({ title: ". Login fails" });
+  assertEquals(result, { error: "Title is empty." });
+  assertEquals(sent.map((r) => r.path), ["/whoami"]);
 });
 
 Deno.test("Slack mentions and links become Shortcut text", async () => {
@@ -560,4 +558,154 @@ Deno.test("a story Shortcut rejects shows Shortcut's reply", async () => {
     failures: { "POST /stories": 422 },
   });
   assertEquals(result, { error: "Shortcut rejected the story (422): {}" });
+});
+
+const reacted = "https://acme.slack.com/archives/C0SUPPORT/p1700000000000100";
+
+Deno.test("Message alone fills Title, Description, and Source link from the Slack message", async () => {
+  using shortcut = await fakeShortcut(acme);
+  const result = await createStory(createContext({
+    inputs: { message: reacted },
+    env,
+    team_id: "T_ACME",
+  }));
+  assertEquals(result, created);
+  assertEquals(shortcut.sent.at(-1)?.body, {
+    name: "Login fails for @jo_park",
+    workflow_state_id: 500,
+    description:
+      `Login fails for [@jo\\_park](shortcutapp://members/${JO}). See [status](https://status.acme.com)\nIt hangs & times out\n\n*Created in Slack from [this message](${reacted}).*`,
+  });
+  assertEquals(shortcut.slackCalls, ["conversations.replies C0SUPPORT"]);
+});
+
+Deno.test("Title and Description override the message's text", async () => {
+  const { body } = await run({
+    title: "Login bug",
+    description: "Seen twice",
+    message: reacted,
+  });
+  assertEquals(body, {
+    name: "Login bug",
+    workflow_state_id: 500,
+    description:
+      `Seen twice\n\n*Created in Slack from [this message](${reacted}).*`,
+  });
+});
+
+Deno.test("Title and Description set don't read the message", async () => {
+  using shortcut = await fakeShortcut(acme);
+  await createStory(createContext({
+    inputs: { title: "t", description: "d", message: reacted },
+    env,
+  }));
+  assertEquals(shortcut.slackCalls, []);
+});
+
+Deno.test("Message fills only the inputs left empty", async () => {
+  const { body } = await run({ title: "Login bug", message: reacted });
+  assertEquals(
+    (body as { name: string }).name,
+    "Login bug",
+  );
+  const withDescription = await run({
+    description: "Seen twice",
+    message: reacted,
+  });
+  assertEquals(
+    (withDescription.body as { name: string }).name,
+    "Login fails for @jo_park",
+  );
+});
+
+Deno.test("Source link replaces the message link in the footer", async () => {
+  const { body } = await run({
+    title: "t",
+    description: "d",
+    message: reacted,
+    source_url: "https://acme.com/ticket/9",
+  });
+  assertEquals(
+    (body as { description: string }).description,
+    "d\n\n*Created in Slack from [this message](https://acme.com/ticket/9).*",
+  );
+});
+
+Deno.test("a thread reply's link reads the reply", async () => {
+  const { body } = await run({
+    message:
+      "https://acme.slack.com/archives/C0SUPPORT/p1700000000000200?thread_ts=1700000000.000100&cid=C0SUPPORT",
+  });
+  assertEquals((body as { name: string }).name, "Same on Safari");
+});
+
+Deno.test("the app joins a public channel it isn't in, then reads the message", async () => {
+  using shortcut = await fakeShortcut(acme);
+  const result = await createStory(createContext({
+    inputs: {
+      message: "https://acme.slack.com/archives/C0RANDOM/p1700000001000100",
+    },
+    env,
+  }));
+  assertEquals(result, created);
+  assertEquals(shortcut.slackCalls, [
+    "conversations.replies C0RANDOM",
+    "conversations.join C0RANDOM",
+    "conversations.replies C0RANDOM",
+  ]);
+});
+
+Deno.test("a private channel without the app is refused before posting", async () => {
+  const { result, posts } = await run({
+    message: "https://acme.slack.com/archives/G0SECRET/p1700000002000100",
+  });
+  assertEquals(result, {
+    error:
+      "This app can't see <#G0SECRET>. In a private channel, add the app first: click the channel's name, then Integrations > Add apps.",
+  });
+  assertEquals(posts, []);
+});
+
+Deno.test("a deleted message is refused before posting", async () => {
+  const link = "https://acme.slack.com/archives/C0SUPPORT/p1700000000000999";
+  const { result, posts } = await run({ message: link });
+  assertEquals(result, {
+    error: `Slack has no message at ${link}. It may have been deleted.`,
+  });
+  assertEquals(posts, []);
+});
+
+Deno.test("a message without text needs a Title", async () => {
+  const { result, posts } = await run({
+    message: "https://acme.slack.com/archives/C0SUPPORT/p1700000000000300",
+  });
+  assertEquals(result, { error: "The message has no text. Set Title." });
+  assertEquals(posts, []);
+});
+
+Deno.test("neither Title nor Message is refused before any request", async () => {
+  for (
+    const inputs of [{}, { title: " ", message: "" }, { description: "d" }]
+  ) {
+    const { result, sent } = await run(inputs);
+    assertEquals(result, { error: "Set Title or Message." });
+    assertEquals(sent, []);
+  }
+});
+
+Deno.test("a Message that isn't a Slack message link is refused before any request", async () => {
+  for (
+    const message of [
+      "Login fails",
+      "https://acme.com/archives/C0SUPPORT/p1700000000000100",
+      "https://acme.slack.com/archives/C0SUPPORT",
+      "http://acme.slack.com/archives/C0SUPPORT/p1700000000000100",
+    ]
+  ) {
+    const { result, sent } = await run({ message });
+    assertEquals(result, {
+      error: `Message "${message}" is not a Slack message link.`,
+    });
+    assertEquals(sent, []);
+  }
 });

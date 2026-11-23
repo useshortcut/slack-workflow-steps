@@ -31,8 +31,9 @@ Deno.test("Create Story keeps its input and output names and types", () => {
       owner: "slack#/types/user_id",
       requester: "slack#/types/user_id",
       source_url: "string",
+      message: "string",
     },
-    required: ["title"],
+    required: [],
   });
   assertEquals(shape(output_parameters), {
     types: { story_id: "integer", story_url: "string" },
