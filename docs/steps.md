@@ -19,7 +19,7 @@ Callback ID: `create_story`.
 | Workflow state | Text                   | No       | A state's name, such as `Ready for Dev`. To name a state in another workflow, enter `Workflow / State`, such as `Design / In Review`. |
 | Priority       | Text                   | No       | A value of the workspace's Priority field, such as `High`.                                                                            |
 | Owner          | Slack user             | No       | The step matches the person to a Shortcut member by email address.                                                                    |
-| Requester      | Slack user             | No       | Matched the same way as Owner. Empty: the token's owner is the requester.                                                             |
+| Requester      | Slack user             | No       | The step matches the person the same way as Owner. If Requester is empty, the token's owner is the requester.                         |
 
 ### Outputs
 
@@ -75,13 +75,13 @@ brackets stand for values from your workspace.
 
 ### Token
 
-| Message                                                                                                                         | Cause                                                                       |
-| ------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| `SHORTCUT_API_TOKEN is not set. Run: slack env add SHORTCUT_API_TOKEN <token>`                                                  | The deployed app has no token.                                              |
-| `SHORTCUT_API_TOKEN is not a Shortcut v4 token (it should start with "sct_"). ...`                                              | The token is a v3 token or not a Shortcut token.                            |
-| `Shortcut refused SHORTCUT_API_TOKEN (403). This step needs a token with the scopes "read", plus "write" or "story-write". ...` | The token doesn't have the `read` scope. Add Comment names `comment-write`. |
-| `The Shortcut token has scopes: <scopes>. This step needs a token with the scopes "read", plus "write" or "story-write". ...`   | The token can't create stories or comments.                                 |
-| `Shortcut rejected SHORTCUT_API_TOKEN (401). It may be revoked or for another workspace.`                                       | Shortcut doesn't accept the token.                                          |
+| Message                                                                                                                         | Cause                                                                                                                    |
+| ------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `SHORTCUT_API_TOKEN is not set. Run: slack env add SHORTCUT_API_TOKEN <token>`                                                  | The deployed app has no token.                                                                                           |
+| `SHORTCUT_API_TOKEN is not a Shortcut v4 token (it should start with "sct_"). ...`                                              | The token is a v3 token or not a Shortcut token.                                                                         |
+| `Shortcut refused SHORTCUT_API_TOKEN (403). This step needs a token with the scopes "read", plus "write" or "story-write". ...` | The token doesn't have the `read` scope. In **Add a comment to a Shortcut story**, the message names `comment-write`.    |
+| `The Shortcut token has scopes: <scopes>. This step needs a token with the scopes "read", plus "write" or "story-write". ...`   | The token can't create stories or comments. In **Add a comment to a Shortcut story**, the message names `comment-write`. |
+| `Shortcut rejected SHORTCUT_API_TOKEN (401). It may be revoked or for another workspace.`                                       | Shortcut doesn't accept the token.                                                                                       |
 
 ### Inputs
 
@@ -102,12 +102,12 @@ brackets stand for values from your workspace.
 
 ### Shortcut responses
 
-| Message                                                                                                                             | Cause                                                                                     |
-| ----------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| `Shortcut rate limit reached (200 requests per minute per token). Wait a minute and rerun the workflow.`                            | The token made too many requests.                                                         |
-| `Shortcut is unavailable (<status>). Rerun the workflow later.`                                                                     | Shortcut failed while the step looked up names. Nothing was created.                      |
-| `Shortcut did not confirm the story (<status>). It may have been created anyway. Check Shortcut before you run the workflow again.` | Shortcut failed while it created the story. The comment step says "comment".              |
-| `Shortcut rejected the story (<status>): <reply>`                                                                                   | Shortcut refused the story. The reply says why.                                           |
-| `Shortcut rejected the comment (<status>): <reply>`                                                                                 | Shortcut refused the comment.                                                             |
-| `Shortcut returned <status> for <path>: <reply>`                                                                                    | A lookup failed for another reason.                                                       |
-| ``Unexpected error: <message>. Run `slack activity` for details.``                                                                  | A bug in this app. Run `slack activity` and report the error in this repository's issues. |
+| Message                                                                                                                             | Cause                                                                                                                                |
+| ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `Shortcut rate limit reached (200 requests per minute per token). Wait a minute and rerun the workflow.`                            | The token made too many requests.                                                                                                    |
+| `Shortcut is unavailable (<status>). Rerun the workflow later.`                                                                     | Shortcut failed while the step looked up names. Nothing was created.                                                                 |
+| `Shortcut did not confirm the story (<status>). It may have been created anyway. Check Shortcut before you run the workflow again.` | Shortcut failed while it created the story. In **Add a comment to a Shortcut story**, the message says "comment" instead of "story". |
+| `Shortcut rejected the story (<status>): <reply>`                                                                                   | Shortcut refused the story. The reply says why.                                                                                      |
+| `Shortcut rejected the comment (<status>): <reply>`                                                                                 | Shortcut refused the comment.                                                                                                        |
+| `Shortcut returned <status> for <path>: <reply>`                                                                                    | A lookup failed for another reason.                                                                                                  |
+| ``Unexpected error: <message>. Run `slack activity` for details.``                                                                  | This app has a bug. Run `slack activity` and report the error in this repository's issues.                                           |
