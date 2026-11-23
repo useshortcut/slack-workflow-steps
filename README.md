@@ -118,12 +118,21 @@ allowance. Check Slack's pricing for your plan.
    slack env add SHORTCUT_API_TOKEN sct_your_token
    ```
 
-6. Let everyone in the workspace use the steps. Until you do, only you see them:
+6. Let everyone in the workspace use the steps. Until you do, only you see them.
+   Run each command on its own, and wait for it to finish before you run the
+   next. If the CLI asks which app, choose **Shortcut Steps**, not the one
+   marked local.
 
    ```sh
    slack function access --name create_story --everyone --grant
+   ```
+
+   ```sh
    slack function access --name add_comment --everyone --grant
    ```
+
+   Each command prints who can use the step. Check that it says "everyone in the
+   workspace".
 
    To allow only some people, replace `--everyone` with their Slack user IDs,
    such as `--users U012AB3CD,U045EF6GH`.
