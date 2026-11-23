@@ -9,17 +9,17 @@ Callback ID: `create_story`.
 
 ### Inputs
 
-| Input          | Type                   | Required | Description                                                                                                                           |
-| -------------- | ---------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| Title          | Text                   | Yes      | The story's name. The step keeps the first 512 characters, Shortcut's limit.                                                          |
-| Description    | Text                   | No       | Markdown.                                                                                                                             |
-| Type           | Feature, Bug, or Chore | No       | Default: Feature.                                                                                                                     |
-| Team           | Text                   | No       | A team's name, mention name, `@` mention name, or ID.                                                                                 |
-| Project        | Text                   | No       | A project's name or ID.                                                                                                               |
-| Workflow state | Text                   | No       | A state's name, such as `Ready for Dev`. To name a state in another workflow, enter `Workflow / State`, such as `Design / In Review`. |
-| Priority       | Text                   | No       | A value of the workspace's Priority field, such as `High`.                                                                            |
-| Owner          | Slack user             | No       | The step matches the person to a Shortcut member by email address.                                                                    |
-| Requester      | Slack user             | No       | The step matches the person the same way as Owner. If Requester is empty, the token's owner is the requester.                         |
+| Input          | Type                   | Required | Description                                                                                                                                                              |
+| -------------- | ---------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Title          | Text                   | Yes      | The story's name. The step uses the first line that has text. It stops before the first period that a space follows, and keeps at most 512 characters, Shortcut's limit. |
+| Description    | Text                   | No       | Markdown.                                                                                                                                                                |
+| Type           | Feature, Bug, or Chore | No       | Default: Feature.                                                                                                                                                        |
+| Team           | Text                   | No       | A team's name, mention name, `@` mention name, or ID.                                                                                                                    |
+| Project        | Text                   | No       | A project's name or ID.                                                                                                                                                  |
+| Workflow state | Text                   | No       | A state's name, such as `Ready for Dev`. To name a state in another workflow, enter `Workflow / State`, such as `Design / In Review`.                                    |
+| Priority       | Text                   | No       | A value of the workspace's Priority field, such as `High`.                                                                                                               |
+| Owner          | Slack user             | No       | The step matches the person to a Shortcut member by email address.                                                                                                       |
+| Requester      | Slack user             | No       | The step matches the person the same way as Owner. If Requester is empty, the token's owner is the requester.                                                            |
 
 ### Outputs
 

@@ -2,6 +2,7 @@ import { DefineFunction, Schema, SlackFunction } from "deno-slack-sdk/mod.ts";
 import { connect } from "../lib/shortcut.ts";
 import { runStep, StepError, trimmed } from "../lib/step.ts";
 import { slackUser } from "../lib/slack.ts";
+import { storyTitle } from "../lib/markup.ts";
 import {
   checkTeamWorkflow,
   memberFor,
@@ -22,7 +23,8 @@ export const CreateStory = DefineFunction({
       title: {
         type: Schema.types.string,
         title: "Title",
-        description: "Text past 512 characters is cut off.",
+        description:
+          "The step uses the first line, up to the end of its first sentence, and at most 512 characters.",
       },
       description: {
         type: Schema.types.string,
@@ -90,7 +92,7 @@ export default SlackFunction(
   CreateStory,
   ({ inputs, env, client }) =>
     runStep(async () => {
-      const title = inputs.title.trim().slice(0, 512);
+      const title = storyTitle(inputs.title);
       if (!title) throw new StepError("Title is empty.");
       const teamIn = trimmed(inputs.team);
       const projectIn = trimmed(inputs.project);

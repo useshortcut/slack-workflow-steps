@@ -66,6 +66,14 @@ Deno.test("the title is cut to 512 characters", async () => {
   assertEquals(body, { name: "x".repeat(512), workflow_state_id: 500 });
 });
 
+Deno.test("the title is the first sentence of the first line", async () => {
+  const { body } = await run({
+    title:
+      "\nLogin fails on Safari. It hangs after the password step.\nSeen twice",
+  });
+  assertEquals(body, { name: "Login fails on Safari", workflow_state_id: 500 });
+});
+
 Deno.test("an empty title is refused before any request", async () => {
   const { result, sent } = await run({ title: "   " });
   assertEquals(result, { error: "Title is empty." });
