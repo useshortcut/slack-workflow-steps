@@ -48,7 +48,9 @@ project's workflow. Shortcut doesn't allow a project's story in another
 workflow.
 
 The step finds Owner and Requester by the email address in their Slack profile.
-The Shortcut member must have the same email address and must not be disabled.
+It compares that address with the email address on each Shortcut member's
+profile, ignoring case. Other email addresses on the member's Shortcut account
+don't match. The member must not be disabled.
 
 ## Add a comment to a Shortcut story
 
@@ -93,7 +95,7 @@ brackets stand for values from your workspace.
 | `<Kind> "<input>" matches more than one: <name> (<id>), .... Enter the ID instead.`   | Two items share the name. Enter the ID from the message.                                                                                        |
 | `Workflow "<name>" doesn't match project "<name>", which uses workflow "<name>". ...` | **Workflow state** names a workflow, but **Project** uses a different one. Shortcut requires a project's stories to use the project's workflow. |
 | `This workspace has no Priority field. ...`                                           | **Priority** is set, but the workspace's Priority field is off.                                                                                 |
-| `No active Shortcut member has the email <email> (<@user>). ...`                      | The Owner or Requester isn't a Shortcut member, is disabled, or uses another email address in Shortcut.                                         |
+| `No active Shortcut member has <email> (<@user>) as their profile email. ...`         | The Owner or Requester isn't a Shortcut member, is disabled, or has another email address on their Shortcut profile.                            |
 | `Slack has no email for <@user>, ...`                                                 | The Owner or Requester is a bot or app, or Slack doesn't share the person's email address.                                                      |
 | `Slack could not look up <@user> (<error>).`                                          | Slack couldn't return the person's profile.                                                                                                     |
 | `"<input>" is not a story. Use a story number (123), sc-123, or a story link.`        | **Story** isn't in a form the step reads.                                                                                                       |

@@ -102,7 +102,7 @@ export function memberFor(
   const member = members.find((m) => m.email_address?.toLowerCase() === email);
   if (!member) {
     throw new StepError(
-      `No active Shortcut member has the email ${user.email} (<@${user.id}>). Invite them to Shortcut or leave ${field} empty.`,
+      `No active Shortcut member has ${user.email} (<@${user.id}>) as their profile email. Other emails on a Shortcut account don't match. Change their Shortcut profile email, invite them, or leave ${field} empty.`,
     );
   }
   return member;

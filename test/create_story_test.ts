@@ -258,7 +258,7 @@ Deno.test("an owner who isn't a Shortcut member is refused", async () => {
   const { result, posts } = await run({ title: "t", owner: "U_PAT" });
   assertEquals(result, {
     error:
-      "No active Shortcut member has the email pat@elsewhere.com (<@U_PAT>). Invite them to Shortcut or leave Owner empty.",
+      "No active Shortcut member has pat@elsewhere.com (<@U_PAT>) as their profile email. Other emails on a Shortcut account don't match. Change their Shortcut profile email, invite them, or leave Owner empty.",
   });
   assertEquals(posts, []);
 });
