@@ -3,6 +3,7 @@ import { connect } from "../lib/shortcut.ts";
 import { runStep, StepError, trimmed } from "../lib/step.ts";
 import { slackUser } from "../lib/slack.ts";
 import {
+  checkTeamWorkflow,
   memberFor,
   parseStateInput,
   pickOne,
@@ -121,11 +122,16 @@ export default SlackFunction(
         ? pickOne("Workflow", state.workflow, workflows, where)
         : undefined;
       const workflow = workflowFor(named, project, team, sc.defaultWorkflow);
+      const [teamWorkflows, states] = await Promise.all([
+        team ? sc.teamWorkflows(team.id) : [],
+        state ? sc.states(workflow.id) : [],
+      ]);
+      if (team) checkTeamWorkflow(team, workflow, teamWorkflows, project);
       const stateId = state
         ? pickOne(
           "State",
           state.state,
-          await sc.states(workflow.id),
+          states,
           `workflow "${workflow.name}"`,
           { hint: ' To use another workflow, enter "Workflow / State".' },
         ).id

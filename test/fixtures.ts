@@ -39,7 +39,13 @@ export const acme: FakeWorkspace = {
     },
   ],
   teams: [
-    { id: INFRA, name: "Infra", mention_name: "infra", workflow: 3 },
+    {
+      id: INFRA,
+      name: "Infra",
+      mention_name: "infra",
+      workflow: 3,
+      workflows: [3, 2],
+    },
     { id: WEB, name: "Web", mention_name: null, workflow: 1 },
     { id: PLATFORM_A, name: "Platform", workflow: 1 },
     { id: PLATFORM_B, name: "Platform", workflow: 1 },

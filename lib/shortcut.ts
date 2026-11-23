@@ -46,6 +46,7 @@ export type Shortcut = {
   workspace: { slug: string; name: string };
   defaultWorkflow: Ref;
   list<K extends keyof Lists>(kind: K): Promise<Lists[K][]>;
+  teamWorkflows(teamId: string): Promise<Ref[]>;
   states(workflowId: number): Promise<Ref[]>;
   defaultStateId(workflowId: number): Promise<number>;
   createStory(body: CreateStoryBody): Promise<{ id: number; app_url: string }>;
@@ -121,6 +122,8 @@ export async function connect(
     workspace: me.workspace,
     defaultWorkflow: me.default_workflow,
     list: (kind) => pages(`${base}/${kind}?limit=100`),
+    teamWorkflows: (teamId) =>
+      pages(`${base}/teams/${teamId}/workflows?limit=100`),
     states: (workflowId) =>
       pages(`${base}/workflows/${workflowId}/states?limit=100`),
     defaultStateId: async (workflowId) => {

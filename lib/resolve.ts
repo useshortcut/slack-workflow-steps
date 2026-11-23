@@ -65,6 +65,24 @@ export function workflowFor(
     workspaceDefault;
 }
 
+/** v4 rejects a story whose team doesn't use the story's workflow. */
+export function checkTeamWorkflow(
+  team: Team,
+  workflow: Ref,
+  teamWorkflows: Ref[],
+  project: Project | undefined,
+): void {
+  if (teamWorkflows.some((w) => w.id === workflow.id)) return;
+  const names = teamWorkflows.map((w) => `"${w.name}"`).join(", ") ||
+    "(none)";
+  const fix = project?.workflow
+    ? `Choose a project that uses one of them, or another team.`
+    : `Choose a state in one of them with "Workflow / State", or another team.`;
+  throw new StepError(
+    `Team "${team.name}" doesn't use workflow "${workflow.name}". Its workflows are: ${names}. ${fix}`,
+  );
+}
+
 export function parseStoryRef(input: string, slug: string): number {
   const text = input.trim();
   const number = /^\[?(?:#|sc-)?(\d+)\]?$/i.exec(text);

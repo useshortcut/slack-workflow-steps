@@ -21,6 +21,8 @@ export type FakeWorkspace = {
     name: string;
     mention_name?: string | null;
     workflow?: number;
+    /** The team's workflows. Default: just its default workflow. */
+    workflows?: number[];
   }[];
   projects?: { id: number; name: string; workflow?: number }[];
   members?: { id: string; email: string | null }[];
@@ -259,6 +261,12 @@ export async function fakeShortcut(
     })),
     "/workflows": ws.workflows.map(workflow),
   };
+  for (const t of ws.teams ?? []) {
+    const ids = t.workflows ?? (t.workflow ? [t.workflow] : []);
+    lists[`/teams/${t.id}/workflows`] = ids.map((id) =>
+      workflow(workflowById(id))
+    );
+  }
   for (const wf of ws.workflows) {
     lists[`/workflows/${wf.id}/states`] = wf.states.map(([id, name]) => ({
       entity_type: "workflow-state",

@@ -104,6 +104,7 @@ Deno.test("a state is looked up in the team's workflow", async () => {
     "/whoami",
     "/teams?limit=100",
     "/teams?cursor=2",
+    `/teams/${INFRA}/workflows?limit=100`,
     "/workflows/3/states?limit=100",
     "/workflows/3/states?cursor=2",
     "/stories",
@@ -150,6 +151,54 @@ Deno.test("a named workflow that isn't the project's is refused before posting",
       'Workflow "Design" doesn\'t match project "Billing", which uses workflow "Engineering". Leave the workflow out of Workflow state, or choose a state in "Engineering".',
   });
   assertEquals(posts, []);
+});
+
+Deno.test("a named workflow the team doesn't use is refused before posting", async () => {
+  const { result, posts } = await run({
+    title: "t",
+    team: "Infra",
+    workflow_state: "Engineering / Ready for Dev",
+  });
+  assertEquals(result, {
+    error:
+      'Team "Infra" doesn\'t use workflow "Engineering". Its workflows are: "Infrastructure", "Design". Choose a state in one of them with "Workflow / State", or another team.',
+  });
+  assertEquals(posts, []);
+});
+
+Deno.test("a project whose workflow the team doesn't use is refused before posting", async () => {
+  const { result, posts } = await run({
+    title: "t",
+    team: "Infra",
+    project: "Billing",
+  });
+  assertEquals(result, {
+    error:
+      'Team "Infra" doesn\'t use workflow "Engineering". Its workflows are: "Infrastructure", "Design". Choose a project that uses one of them, or another team.',
+  });
+  assertEquals(posts, []);
+});
+
+Deno.test("every page of the team's workflows is checked", async () => {
+  const teams = [{
+    id: INFRA,
+    name: "Infra",
+    workflow: 3,
+    workflows: [3, 1, 2],
+  }];
+  const { body, sent } = await run({
+    title: "t",
+    team: "Infra",
+    workflow_state: "Design / Backlog",
+  }, { ...acme, teams });
+  assertEquals(body, { name: "t", workflow_state_id: 600, team_id: INFRA });
+  assertEquals(
+    sent.filter((r) => r.path.startsWith(`/teams/${INFRA}`)).map((r) => r.path),
+    [
+      `/teams/${INFRA}/workflows?limit=100`,
+      `/teams/${INFRA}/workflows?cursor=2`,
+    ],
+  );
 });
 
 Deno.test("a project is matched by ID", async () => {

@@ -47,6 +47,10 @@ If **Project** is set, a workflow named in **Workflow state** must be the
 project's workflow. Shortcut doesn't allow a project's story in another
 workflow.
 
+If **Team** is set, the workflow the step picks must be one of the team's
+workflows. This includes the project's workflow when **Project** is also set.
+Shortcut doesn't allow a team's story in a workflow the team doesn't use.
+
 The step finds Owner and Requester by the email address in their Slack profile.
 It compares that address with the email address on each Shortcut member's
 profile, ignoring case. Other email addresses on the member's Shortcut account
@@ -88,20 +92,21 @@ brackets stand for values from your workspace.
 
 ### Inputs
 
-| Message                                                                               | Cause                                                                                                                                           |
-| ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Title is empty.`                                                                     | **Title** has no text.                                                                                                                          |
-| `Comment is empty.`                                                                   | **Comment** has no text.                                                                                                                        |
-| `<Kind> "<input>" not found in <place>. Choose one of: <names>.`                      | No team, project, workflow, state, or priority value has that name. The message lists up to 15 names.                                           |
-| `<Kind> "<input>" matches more than one: <name> (<id>), .... Enter the ID instead.`   | Two items share the name. Enter the ID from the message.                                                                                        |
-| `Workflow "<name>" doesn't match project "<name>", which uses workflow "<name>". ...` | **Workflow state** names a workflow, but **Project** uses a different one. Shortcut requires a project's stories to use the project's workflow. |
-| `This workspace has no Priority field. ...`                                           | **Priority** is set, but the workspace's Priority field is off.                                                                                 |
-| `No active Shortcut member has <email> (<@user>) as their profile email. ...`         | The Owner or Requester isn't a Shortcut member, is disabled, or has another email address on their Shortcut profile.                            |
-| `Slack has no email for <@user>, ...`                                                 | The Owner or Requester is a bot or app, or Slack doesn't share the person's email address.                                                      |
-| `Slack could not look up <@user> (<error>).`                                          | Slack couldn't return the person's profile.                                                                                                     |
-| `"<input>" is not a story. Use a story number (123), sc-123, or a story link.`        | **Story** isn't in a form the step reads.                                                                                                       |
-| `That story link is for workspace "<slug>", but SHORTCUT_API_TOKEN is for "<slug>".`  | The link points to another Shortcut workspace.                                                                                                  |
-| `Story <id> not found in Shortcut workspace "<name>".`                                | The story doesn't exist, or the token's owner can't see it.                                                                                     |
+| Message                                                                               | Cause                                                                                                                                                                                                                               |
+| ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Title is empty.`                                                                     | **Title** has no text.                                                                                                                                                                                                              |
+| `Comment is empty.`                                                                   | **Comment** has no text.                                                                                                                                                                                                            |
+| `<Kind> "<input>" not found in <place>. Choose one of: <names>.`                      | No team, project, workflow, state, or priority value has that name. The message lists up to 15 names.                                                                                                                               |
+| `<Kind> "<input>" matches more than one: <name> (<id>), .... Enter the ID instead.`   | Two items share the name. Enter the ID from the message.                                                                                                                                                                            |
+| `Workflow "<name>" doesn't match project "<name>", which uses workflow "<name>". ...` | **Workflow state** names a workflow, but **Project** uses a different one. Shortcut requires a project's stories to use the project's workflow.                                                                                     |
+| `Team "<name>" doesn't use workflow "<name>". Its workflows are: <names>. ...`        | The story's workflow isn't one of the team's workflows. The workflow comes from **Workflow state**, **Project**, or the workspace default. Choose a state in one of the team's workflows, a project that uses one, or another team. |
+| `This workspace has no Priority field. ...`                                           | **Priority** is set, but the workspace's Priority field is off.                                                                                                                                                                     |
+| `No active Shortcut member has <email> (<@user>) as their profile email. ...`         | The Owner or Requester isn't a Shortcut member, is disabled, or has another email address on their Shortcut profile.                                                                                                                |
+| `Slack has no email for <@user>, ...`                                                 | The Owner or Requester is a bot or app, or Slack doesn't share the person's email address.                                                                                                                                          |
+| `Slack could not look up <@user> (<error>).`                                          | Slack couldn't return the person's profile.                                                                                                                                                                                         |
+| `"<input>" is not a story. Use a story number (123), sc-123, or a story link.`        | **Story** isn't in a form the step reads.                                                                                                                                                                                           |
+| `That story link is for workspace "<slug>", but SHORTCUT_API_TOKEN is for "<slug>".`  | The link points to another Shortcut workspace.                                                                                                                                                                                      |
+| `Story <id> not found in Shortcut workspace "<name>".`                                | The story doesn't exist, or the token's owner can't see it.                                                                                                                                                                         |
 
 ### Shortcut responses
 
