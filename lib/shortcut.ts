@@ -57,6 +57,7 @@ type Whoami = {
   default_workflow: Ref;
   default_workflow_state: Ref;
   authorization: { scopes: string[] };
+  member: { name: string; mention_name: string; role: string };
 };
 
 export async function connect(
@@ -107,6 +108,11 @@ export async function connect(
   if (!scopes.includes("write") && !scopes.includes(scope)) {
     throw new StepError(
       `The Shortcut token has scopes: ${scopes.join(", ")}. ${needs}`,
+    );
+  }
+  if (me.member.role === "observer") {
+    throw new StepError(
+      `SHORTCUT_API_TOKEN belongs to ${me.member.name} (@${me.member.mention_name}), an Observer. Observers can't create stories or comments. Use a token from a Member, Admin, or Owner.`,
     );
   }
 

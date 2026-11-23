@@ -8,6 +8,7 @@ const PAGE_SIZE = 2;
 
 export type FakeWorkspace = {
   scopes?: string[];
+  tokenRole?: string;
   defaultWorkflow: number;
   workflows: {
     id: number;
@@ -306,6 +307,13 @@ export async function fakeShortcut(
           default_workflow: slim(wf.id),
           default_workflow_state: defaultState(wf),
           authorization: { scopes: ws.scopes ?? ["read", "write"] },
+          member: {
+            entity_type: "member",
+            id: "11110000-0000-4000-8000-0000000000aa",
+            name: "Alex Doe",
+            mention_name: "alex",
+            role: ws.tokenRole ?? "member",
+          },
         }),
       ] as const;
     }

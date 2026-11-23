@@ -77,13 +77,14 @@ brackets stand for values from your workspace.
 
 ### Token
 
-| Message                                                                                                                         | Cause                                                                                                                    |
-| ------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `SHORTCUT_API_TOKEN is not set. Run: slack env add SHORTCUT_API_TOKEN <token>`                                                  | The deployed app has no token.                                                                                           |
-| `SHORTCUT_API_TOKEN is not a Shortcut v4 token (it should start with "sct_"). ...`                                              | The token is a v3 token or not a Shortcut token.                                                                         |
-| `Shortcut refused SHORTCUT_API_TOKEN (403). This step needs a token with the scopes "read", plus "write" or "story-write". ...` | The token doesn't have the `read` scope. In **Add a comment to a Shortcut story**, the message names `comment-write`.    |
-| `The Shortcut token has scopes: <scopes>. This step needs a token with the scopes "read", plus "write" or "story-write". ...`   | The token can't create stories or comments. In **Add a comment to a Shortcut story**, the message names `comment-write`. |
-| `Shortcut rejected SHORTCUT_API_TOKEN (401). It may be revoked or for another workspace.`                                       | Shortcut doesn't accept the token.                                                                                       |
+| Message                                                                                                                         | Cause                                                                                                                                               |
+| ------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `SHORTCUT_API_TOKEN is not set. Run: slack env add SHORTCUT_API_TOKEN <token>`                                                  | The deployed app has no token.                                                                                                                      |
+| `SHORTCUT_API_TOKEN is not a Shortcut v4 token (it should start with "sct_"). ...`                                              | The token is a v3 token or not a Shortcut token.                                                                                                    |
+| `Shortcut refused SHORTCUT_API_TOKEN (403). This step needs a token with the scopes "read", plus "write" or "story-write". ...` | The token doesn't have the `read` scope. In **Add a comment to a Shortcut story**, the message names `comment-write`.                               |
+| `The Shortcut token has scopes: <scopes>. This step needs a token with the scopes "read", plus "write" or "story-write". ...`   | The token can't create stories or comments. In **Add a comment to a Shortcut story**, the message names `comment-write`.                            |
+| `SHORTCUT_API_TOKEN belongs to <name> (@<mention name>), an Observer. ...`                                                      | The token's owner has the Observer role. Shortcut lets only Members, Admins, and Owners create stories and comments. Create a token as one of them. |
+| `Shortcut rejected SHORTCUT_API_TOKEN (401). It may be revoked or for another workspace.`                                       | Shortcut doesn't accept the token.                                                                                                                  |
 
 ### Inputs
 

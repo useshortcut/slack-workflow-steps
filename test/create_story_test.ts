@@ -337,6 +337,25 @@ Deno.test("a token that can read but not write stories is refused after /whoami"
   assertEquals(sent.map((r) => r.path), ["/whoami"]);
 });
 
+Deno.test("an Observer's token is refused after /whoami", async () => {
+  const { result, sent } = await run({ title: "t" }, {
+    ...acme,
+    tokenRole: "observer",
+  });
+  assertEquals(result, {
+    error:
+      "SHORTCUT_API_TOKEN belongs to Alex Doe (@alex), an Observer. Observers can't create stories or comments. Use a token from a Member, Admin, or Owner.",
+  });
+  assertEquals(sent.map((r) => r.path), ["/whoami"]);
+});
+
+Deno.test("a Member, Admin, or Owner's token can create stories", async () => {
+  for (const role of ["member", "admin", "owner"]) {
+    const { result } = await run({ title: "t" }, { ...acme, tokenRole: role });
+    assertEquals(result, created, role);
+  }
+});
+
 Deno.test("a token without read is refused at /whoami", async () => {
   const { result, sent } = await run({ title: "t" }, {
     ...acme,
