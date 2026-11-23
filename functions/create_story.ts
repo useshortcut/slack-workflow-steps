@@ -4,6 +4,7 @@ import { runStep, StepError, trimmed } from "../lib/step.ts";
 import { findSlackUsers, slackUser } from "../lib/slack.ts";
 import {
   parseSlackText,
+  sourceLine,
   storyTitle,
   toMarkdown,
   toPlainText,
@@ -84,6 +85,12 @@ export const CreateStory = DefineFunction({
         description:
           "Matched to Shortcut by email. Empty uses the owner of the API token.",
       },
+      source_url: {
+        type: Schema.types.string,
+        title: "Source link",
+        description:
+          "A link to the Slack message, such as the trigger's message link.",
+      },
     },
     required: ["title"],
   },
@@ -106,6 +113,8 @@ export default SlackFunction(
         ? parseSlackText(descriptionIn)
         : [];
       const mentioned = userIds([...titleText, ...descriptionText]);
+      const sourceIn = trimmed(inputs.source_url);
+      const source = sourceIn ? sourceLine(sourceIn) : undefined;
       const teamIn = trimmed(inputs.team);
       const projectIn = trimmed(inputs.project);
       const stateIn = trimmed(inputs.workflow_state);
@@ -166,9 +175,10 @@ export default SlackFunction(
       const story = await sc.createStory({
         name: title,
         workflow_state_id: stateId,
-        description: descriptionIn
-          ? toMarkdown(descriptionText, people, team_id)
-          : undefined,
+        description: [
+          descriptionIn && toMarkdown(descriptionText, people, team_id),
+          source,
+        ].filter((p) => p).join("\n\n") || undefined,
         story_type: inputs.story_type,
         team_id: team?.id,
         project_id: project?.id,

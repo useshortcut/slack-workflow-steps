@@ -30,6 +30,7 @@ Deno.test("Create Story keeps its input and output names and types", () => {
       priority: "string",
       owner: "slack#/types/user_id",
       requester: "slack#/types/user_id",
+      source_url: "string",
     },
     required: ["title"],
   });
@@ -46,6 +47,7 @@ Deno.test("Add Comment keeps its input and output names and types", () => {
       story: "string",
       comment: "string",
       posted_by: "slack#/types/user_id",
+      source_url: "string",
     },
     required: ["story", "comment"],
   });

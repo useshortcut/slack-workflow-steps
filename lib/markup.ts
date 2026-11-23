@@ -1,3 +1,5 @@
+import { StepError } from "./step.ts";
+
 export type Piece =
   | { kind: "text"; text: string }
   | { kind: "user"; id: string; label?: string }
@@ -125,6 +127,15 @@ function render(
         return p.label ? link(p.label, p.url) : p.url;
     }
   }).join("");
+}
+
+/** The line the Shortcut Slack app adds to a story or comment made from a message. */
+export function sourceLine(input: string): string {
+  const url = URL.canParse(input) ? new URL(input) : undefined;
+  if (url?.protocol !== "https:") {
+    throw new StepError(`Source link "${input}" is not a link.`);
+  }
+  return `*Created in Slack from ${markdownLink("this message", url.href)}.*`;
 }
 
 /** Titles a story the way the Shortcut Slack app's story modal does. */

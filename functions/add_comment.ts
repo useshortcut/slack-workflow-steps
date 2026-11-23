@@ -1,9 +1,14 @@
 import { DefineFunction, Schema, SlackFunction } from "deno-slack-sdk/mod.ts";
 import { connect } from "../lib/shortcut.ts";
-import { runStep, StepError } from "../lib/step.ts";
+import { runStep, StepError, trimmed } from "../lib/step.ts";
 import { findSlackUsers, slackUser } from "../lib/slack.ts";
 import { parseStoryRef, peopleFor } from "../lib/resolve.ts";
-import { parseSlackText, toMarkdown, userIds } from "../lib/markup.ts";
+import {
+  parseSlackText,
+  sourceLine,
+  toMarkdown,
+  userIds,
+} from "../lib/markup.ts";
 
 export const AddComment = DefineFunction({
   callback_id: "add_comment",
@@ -30,6 +35,12 @@ export const AddComment = DefineFunction({
         description:
           "Shortcut shows the API token's owner as the author, so this person's name is added to the comment.",
       },
+      source_url: {
+        type: Schema.types.string,
+        title: "Source link",
+        description:
+          "A link to the Slack message, such as the trigger's message link.",
+      },
     },
     required: ["story", "comment"],
   },
@@ -49,6 +60,8 @@ export default SlackFunction(
       if (!commentIn) throw new StepError("Comment is empty.");
       const commentText = parseSlackText(commentIn);
       const mentioned = userIds(commentText);
+      const sourceIn = trimmed(inputs.source_url);
+      const source = sourceIn ? sourceLine(sourceIn) : undefined;
       const sc = await connect(env.SHORTCUT_API_TOKEN, "comment-write");
       const storyId = parseStoryRef(inputs.story, sc.workspace.slug);
       const [by, members, mentionedUsers] = await Promise.all([
@@ -62,9 +75,11 @@ export default SlackFunction(
         team_id,
       );
       // v4 lets only admins set author_id, so attribution goes in the text.
-      const text = by
-        ? `${comment}\n\n_Posted from Slack by ${by.name}_`
-        : comment;
+      const text = [
+        comment,
+        by && `_Posted from Slack by ${by.name}_`,
+        source,
+      ].filter((p) => p).join("\n\n");
       const posted = await sc.createComment(storyId, text);
       return { comment_url: posted.app_url };
     }),

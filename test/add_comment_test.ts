@@ -70,6 +70,30 @@ Deno.test("Slack mentions in the comment become Shortcut mentions", async () => 
   });
 });
 
+Deno.test("Posted by and Source link each add a line, Posted by first", async () => {
+  const permalink = "https://acme.slack.com/archives/C42/p1700000000000100";
+  const { sent } = await run({
+    story: "123",
+    comment: "Seen again",
+    posted_by: "U_PAT",
+    source_url: permalink,
+  });
+  assertEquals(sent.at(-1)?.body, {
+    text:
+      `Seen again\n\n_Posted from Slack by Pat Kim_\n\n*Created in Slack from [this message](${permalink}).*`,
+  });
+});
+
+Deno.test("a Source link that isn't a link is refused before any request", async () => {
+  const { result, sent } = await run({
+    story: "123",
+    comment: "c",
+    source_url: "thread",
+  });
+  assertEquals(result, { error: 'Source link "thread" is not a link.' });
+  assertEquals(sent, []);
+});
+
 Deno.test("a link to another workspace is refused before posting", async () => {
   const { result, sent } = await run({
     story: "https://app.shortcut.com/other/story/123/login-fails",

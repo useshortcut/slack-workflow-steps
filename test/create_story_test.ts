@@ -108,6 +108,42 @@ Deno.test("Slack mentions and links become Shortcut text", async () => {
   ]);
 });
 
+const permalink =
+  "https://acme.slack.com/archives/C42/p1700000000000100?thread_ts=1700000000.000100&cid=C42";
+
+Deno.test("Source link adds a line linking the Slack message", async () => {
+  const { body } = await run({
+    title: "t",
+    description: "Seen on Safari",
+    source_url: ` ${permalink} `,
+  });
+  assertEquals(body, {
+    name: "t",
+    workflow_state_id: 500,
+    description:
+      `Seen on Safari\n\n*Created in Slack from [this message](${permalink}).*`,
+  });
+});
+
+Deno.test("Source link without a description is the whole description", async () => {
+  const { body } = await run({ title: "t", source_url: permalink });
+  assertEquals(body, {
+    name: "t",
+    workflow_state_id: 500,
+    description: `*Created in Slack from [this message](${permalink}).*`,
+  });
+});
+
+Deno.test("a Source link that isn't an https link is refused before any request", async () => {
+  for (const source_url of ["see thread", "http://acme.slack.com/x", "C42"]) {
+    const { result, sent } = await run({ title: "t", source_url });
+    assertEquals(result, {
+      error: `Source link "${source_url}" is not a link.`,
+    });
+    assertEquals(sent, []);
+  }
+});
+
 Deno.test("text without mentions doesn't list members", async () => {
   const { sent } = await run({
     title: "Login fails",
