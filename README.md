@@ -129,9 +129,8 @@ allowance. Check Slack's pricing for your plan.
    such as `--users U012AB3CD,U045EF6GH`.
 
 7. In Slack, open Workflow Builder, add a step, and search for **Shortcut**. The
-   two steps appear under the app **Shortcut Steps**. To find Workflow Builder,
-   click **More** in Slack's sidebar, then **Automations**, or search Slack for
-   "Workflow Builder".
+   two steps appear under the app **Shortcut Steps**. To find your workflows,
+   click **Agents & tools** in Slack's sidebar, then **Workflows**.
 
 To see what the steps did, run `slack activity --tail`.
 
