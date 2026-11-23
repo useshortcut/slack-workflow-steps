@@ -64,43 +64,83 @@ You need:
 - A paid Slack plan. Slack doesn't allow custom workflow steps on the free plan.
 - Permission to install apps in your Slack workspace, or an admin who approves
   the app.
-- The [Slack CLI](https://docs.slack.dev/tools/slack-cli/), signed in to your
-  workspace with `slack login`.
 - A Shortcut API v4 token. In Shortcut, open **Settings** > **API Tokens**.
   Create a token with the `read` and `write` scopes. A token with `read`,
-  `story-write`, and `comment-write` also works. The steps act as the Shortcut
-  member who owns the token.
+  `story-write`, and `comment-write` also works.
+
+Shortcut shows the token's owner as the author of every comment and as the
+default requester of every story. The owner must be a Member, Admin, or Owner,
+because Observers can't create stories or comments. If the whole team will use
+the steps, consider a token from a shared Shortcut account rather than your own.
 
 Slack may charge for workflows that use custom steps after your plan's monthly
 allowance. Check Slack's pricing for your plan.
 
 ## Deploy the app
 
-1. Clone this repository and open its folder:
+1. Install the [Slack CLI](https://docs.slack.dev/tools/slack-cli/). On macOS
+   and Linux:
+
+   ```sh
+   curl -fsSL https://downloads.slack-edge.com/slack-cli/install.sh | bash
+   ```
+
+2. Sign in to your Slack workspace:
+
+   ```sh
+   slack login
+   ```
+
+   The CLI prints a command that starts with `/slackauthticket`. Paste it into a
+   message box in Slack and send it. Then enter the code that Slack shows in the
+   terminal.
+
+3. Clone this repository and open its folder:
 
    ```sh
    git clone https://github.com/useshortcut/slack-workflow-steps.git
    cd slack-workflow-steps
    ```
 
-2. Deploy the app to your workspace:
+4. Deploy the app to your workspace:
 
    ```sh
    slack deploy
    ```
 
-   When the CLI asks which workspace to deploy to, choose yours.
+   When the CLI asks which workspace to deploy to, choose yours. If your
+   workspace requires approval for apps, an admin must approve the app before
+   you continue.
 
-3. Store your Shortcut token in the deployed app:
+5. Store your Shortcut token in the deployed app:
 
    ```sh
    slack env add SHORTCUT_API_TOKEN sct_your_token
    ```
 
-4. In Slack, open Workflow Builder, add a step, and search for **Shortcut**. The
-   two steps appear under the app **Shortcut Steps**.
+6. Let everyone in the workspace use the steps. Until you do, only you see them:
 
-To update the app later, run `git pull`, then run `slack deploy` again.
+   ```sh
+   slack function access --name create_story --everyone --grant
+   slack function access --name add_comment --everyone --grant
+   ```
+
+   To allow only some people, replace `--everyone` with their Slack user IDs,
+   such as `--users U012AB3CD,U045EF6GH`.
+
+7. In Slack, open Workflow Builder, add a step, and search for **Shortcut**. The
+   two steps appear under the app **Shortcut Steps**. To find Workflow Builder,
+   click **More** in Slack's sidebar, then **Automations**, or search Slack for
+   "Workflow Builder".
+
+To see what the steps did, run `slack activity --tail`.
+
+### Update the app
+
+Run `git pull`, then run `slack deploy` again. If the update adds Slack
+permissions, an admin may need to approve them again. If a step in a workflow
+still shows its old inputs after an update, delete the step from the workflow
+and add it again.
 
 ## Build a workflow
 
@@ -109,11 +149,16 @@ To update the app later, run `git pull`, then run `slack deploy` again.
 1. In Workflow Builder, start a workflow with the trigger **When an emoji
    reaction is used**. Choose an emoji, such as 🎫, and a channel.
 2. Add the step **Create a Shortcut story**. Set **Message** to the trigger's
-   **Link to the message that was reacted to**. Leave **Title** and
-   **Description** empty. The step reads the message, makes its first sentence
-   the title and its whole text the description, and links back to it.
-3. Add a step that replies in the message's thread, and put the step's **Story
-   link** output in the reply.
+   **Link to the message that was reacted to**: click `{ }` next to **Message**
+   and choose it from the list. Leave **Title** and **Description** empty. The
+   step reads the message, makes its first sentence the title and its whole text
+   the description, and links back to it. Type your team's name in **Team** if
+   your stories belong to teams.
+3. Add a step that replies in the message's thread, such as **Reply to a message
+   in thread**. Set the message to **Link to the message that was reacted to**,
+   and put the step's **Story link** output in the reply.
+4. Publish the workflow, then react to a message with the emoji. The workflow
+   runs once for each message.
 
 The app reads the message from Slack. It joins a public channel the first time
 it reads a message there. For a private channel, add the app to the channel
@@ -162,6 +207,18 @@ message.
       thread.
 
 ## Development
+
+To try a change in Slack before you deploy it, put your token in a `.env` file
+and run the app from your computer:
+
+```sh
+echo 'SHORTCUT_API_TOKEN=sct_your_token' > .env
+slack run
+```
+
+The app appears in Workflow Builder as **Shortcut Steps (local)**, and works
+only while `slack run` is running. It is a separate app from the deployed one,
+so a workflow built with it must be rebuilt with **Shortcut Steps** later.
 
 Install [Deno](https://deno.com), then run the checks and tests from the
 repository folder:
