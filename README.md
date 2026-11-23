@@ -10,9 +10,14 @@ A typical workflow starts from a Slack form, creates a story from the answers,
 and posts the story link back to the channel.
 
 > [!IMPORTANT]
-> You can't get these steps by installing the Shortcut app from the Slack
-> Marketplace, because Slack doesn't allow it. Someone in your Slack workspace
-> has to deploy this app from this repository. The next section explains why.
+> Slack hosts this app for you. You don't need a server. You deploy it to your
+> Slack workspace with one command, `slack deploy`, and Slack runs it on Slack's
+> servers.
+>
+> You have to deploy it yourself because Slack doesn't allow workflow steps in
+> apps from the Slack Marketplace. The Shortcut app in the Marketplace can't
+> include these steps, so Shortcut publishes them here instead. The next section
+> quotes Slack's rule.
 
 ## Why you have to deploy this app yourself
 
