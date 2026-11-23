@@ -130,11 +130,16 @@ message.
   comment.
 - Each run of **Create a Shortcut story** creates a new story. The step doesn't
   check for duplicates.
-- The app has no step to link a Slack thread to a story, because Shortcut's API
-  can't create thread links. To keep a thread and a story in sync, install the
-  Shortcut app from the Slack Marketplace and use its **Link Thread to Story**
-  action on a message in the thread. A workflow can also post the **Story link**
-  output into the thread.
+
+## Planned
+
+- [ ] **Link a Slack thread to a story.** This step will link a thread to a
+      story, the same way the Shortcut Slack app's **Link Thread to Story**
+      action does. Shortcut's API can't create thread links yet, so we'll add
+      the step after we add that API. Until then, install the Shortcut app from
+      the Slack Marketplace and use **Link Thread to Story** on a message in the
+      thread. A workflow can also post the **Story link** output into the
+      thread.
 
 ## Development
 
