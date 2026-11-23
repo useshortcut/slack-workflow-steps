@@ -63,12 +63,12 @@ Callback ID: `add_comment`.
 
 ### Inputs
 
-| Input       | Type       | Required | Description                                                                                                                                                                                        |
-| ----------- | ---------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Story       | Text       | Yes      | One of: `123`, `#123`, `sc-123`, `[sc-123]`, or a story link such as `https://app.shortcut.com/acme/story/123/login-fails`. You can use the **Story link** output of **Create a Shortcut story**.  |
-| Comment     | Text       | Yes      | Markdown. See [Slack text](#slack-text).                                                                                                                                                           |
-| Posted by   | Slack user | No       | The step adds "Posted from Slack by" and this person's Slack name to the end of the comment.                                                                                                       |
-| Source link | Text       | No       | An `https` link to the Slack message, such as the trigger's message link. The step adds `*Created in Slack from [this message](<link>).*` to the end of the comment, after the **Posted by** line. |
+| Input       | Type       | Required | Description                                                                                                                                                                                                                                                           |
+| ----------- | ---------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Story       | Text       | Yes      | One of: `123`, `#123`, `sc-123`, `[sc-123]`, or a story link such as `https://app.shortcut.com/acme/story/123/login-fails`. You can use the **Story link** output of **Create a Shortcut story**.                                                                     |
+| Comment     | Text       | Yes      | Markdown. See [Slack text](#slack-text).                                                                                                                                                                                                                              |
+| Posted by   | Slack user | No       | The step adds "Posted from Slack by" and the person's Shortcut mention to the end of the comment. It matches the person to a Shortcut member the same way as **Owner** in **Create a Shortcut story**. If no member matches, it uses the person's Slack name instead. |
+| Source link | Text       | No       | An `https` link to the Slack message, such as the trigger's message link. The step adds `*Created in Slack from [this message](<link>).*` to the end of the comment, after the **Posted by** line.                                                                    |
 
 ### Outputs
 

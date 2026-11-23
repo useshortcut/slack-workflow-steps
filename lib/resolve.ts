@@ -131,14 +131,18 @@ function findMember(members: Member[], email: string): Member | undefined {
   return members.find((m) => m.email_address?.toLowerCase() === wanted);
 }
 
+export function personFor(user: SlackUser, members: Member[]): Person {
+  return {
+    name: user.name,
+    member: user.email ? findMember(members, user.email) : undefined,
+  };
+}
+
 export function peopleFor(
   users: SlackUser[],
   members: Member[],
 ): Map<string, Person> {
-  return new Map(users.map((u) => [u.id, {
-    name: u.name,
-    member: u.email ? findMember(members, u.email) : undefined,
-  }]));
+  return new Map(users.map((u) => [u.id, personFor(u, members)]));
 }
 
 export function priorityValue(

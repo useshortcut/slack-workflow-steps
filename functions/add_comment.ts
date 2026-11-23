@@ -2,9 +2,10 @@ import { DefineFunction, Schema, SlackFunction } from "deno-slack-sdk/mod.ts";
 import { connect } from "../lib/shortcut.ts";
 import { runStep, StepError, trimmed } from "../lib/step.ts";
 import { findSlackUsers, slackUser } from "../lib/slack.ts";
-import { parseStoryRef, peopleFor } from "../lib/resolve.ts";
+import { parseStoryRef, peopleFor, personFor } from "../lib/resolve.ts";
 import {
   parseSlackText,
+  postedByLine,
   sourceLine,
   toMarkdown,
   userIds,
@@ -33,7 +34,7 @@ export const AddComment = DefineFunction({
         type: Schema.slack.types.user_id,
         title: "Posted by",
         description:
-          "Shortcut shows the API token's owner as the author, so this person's name is added to the comment.",
+          "Shortcut shows the API token's owner as the author, so the comment ends with this person's Shortcut mention, or their Slack name if they aren't a member.",
       },
       source_url: {
         type: Schema.types.string,
@@ -66,7 +67,7 @@ export default SlackFunction(
       const storyId = parseStoryRef(inputs.story, sc.workspace.slug);
       const [by, members, mentionedUsers] = await Promise.all([
         inputs.posted_by ? slackUser(client, inputs.posted_by) : undefined,
-        mentioned.length ? sc.list("members") : [],
+        inputs.posted_by || mentioned.length ? sc.list("members") : [],
         findSlackUsers(client, mentioned),
       ]);
       const comment = toMarkdown(
@@ -77,7 +78,7 @@ export default SlackFunction(
       // v4 lets only admins set author_id, so attribution goes in the text.
       const text = [
         comment,
-        by && `_Posted from Slack by ${by.name}_`,
+        by && postedByLine(personFor(by, members)),
         source,
       ].filter((p) => p).join("\n\n");
       const posted = await sc.createComment(storyId, text);

@@ -76,6 +76,16 @@ function markdownLink(text: string, url: string): string {
   return `[${label}](${url.replace(/[()<> ]/g, "\\$&")})`;
 }
 
+const memberLink = (m: { id: string; mention_name: string }) =>
+  [`@${m.mention_name}`, `shortcutapp://members/${m.id}`] as const;
+
+export function postedByLine(person: Person): string {
+  const name = person.member
+    ? markdownLink(...memberLink(person.member))
+    : person.name;
+  return `_Posted from Slack by ${name}_`;
+}
+
 export function toMarkdown(
   pieces: Piece[],
   people: Map<string, Person>,
@@ -105,12 +115,7 @@ function render(
         const person = people.get(p.id);
         if (!person) return p.label ?? `<@${p.id}>`;
         const { member } = person;
-        return member
-          ? link(
-            `@${member.mention_name}`,
-            `shortcutapp://members/${member.id}`,
-          )
-          : `@${person.name}`;
+        return member ? link(...memberLink(member)) : `@${person.name}`;
       }
       case "channel": {
         const query = new URLSearchParams({ channel: p.id, team: teamId });

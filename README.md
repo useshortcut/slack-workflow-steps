@@ -131,8 +131,8 @@ message.
   deployed them.
 - Shortcut shows every comment as written by the token's owner, because only
   Shortcut admins can post a comment as someone else. To name the person, set
-  **Posted by**. The step then adds "Posted from Slack by" and their name to the
-  comment.
+  **Posted by**. The step then adds "Posted from Slack by" and their Shortcut
+  mention to the comment, or their Slack name if they aren't a Shortcut member.
 - Each run of **Create a Shortcut story** creates a new story. The step doesn't
   check for duplicates.
 

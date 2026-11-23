@@ -43,15 +43,36 @@ Deno.test("every story reference form posts to that story", async () => {
   }
 });
 
-Deno.test("Posted by adds the Slack user's name to the text", async () => {
+Deno.test("Posted by mentions the Shortcut member with the person's email", async () => {
   const { sent } = await run({
     story: "123",
     comment: "Customer confirmed the fix",
     posted_by: "U_JO",
   });
-  assertEquals(sent[1].body, {
-    text: "Customer confirmed the fix\n\n_Posted from Slack by Jo Park_",
+  assertEquals(sent.at(-1)?.body, {
+    text:
+      `Customer confirmed the fix\n\n_Posted from Slack by [@jo\\_park](shortcutapp://members/${JO})_`,
   });
+});
+
+Deno.test("Posted by without a Shortcut member uses the Slack name", async () => {
+  for (
+    const [posted_by, name] of [["U_PAT", "Pat Kim"], ["U_BOT", "Deploy Bot"]]
+  ) {
+    const { result, sent } = await run({
+      story: "123",
+      comment: "c",
+      posted_by,
+    });
+    assertEquals(sent.at(-1)?.body, {
+      text: `c\n\n_Posted from Slack by ${name}_`,
+    });
+    assertEquals(result, {
+      outputs: {
+        comment_url: "https://app.shortcut.com/acme/story/123#activity-9",
+      },
+    });
+  }
 });
 
 Deno.test("Slack mentions in the comment become Shortcut mentions", async () => {
