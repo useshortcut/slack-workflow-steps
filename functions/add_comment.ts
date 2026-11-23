@@ -1,8 +1,9 @@
 import { DefineFunction, Schema, SlackFunction } from "deno-slack-sdk/mod.ts";
 import { connect } from "../lib/shortcut.ts";
 import { runStep, StepError } from "../lib/step.ts";
-import { slackUser } from "../lib/slack.ts";
-import { parseStoryRef } from "../lib/resolve.ts";
+import { findSlackUsers, slackUser } from "../lib/slack.ts";
+import { parseStoryRef, peopleFor } from "../lib/resolve.ts";
+import { parseSlackText, toMarkdown, userIds } from "../lib/markup.ts";
 
 export const AddComment = DefineFunction({
   callback_id: "add_comment",
@@ -20,7 +21,8 @@ export const AddComment = DefineFunction({
       comment: {
         type: Schema.types.string,
         title: "Comment",
-        description: "Markdown.",
+        description:
+          "Markdown. Slack mentions, channels, and links become Shortcut mentions and links.",
       },
       posted_by: {
         type: Schema.slack.types.user_id,
@@ -41,15 +43,24 @@ export const AddComment = DefineFunction({
 
 export default SlackFunction(
   AddComment,
-  ({ inputs, env, client }) =>
+  ({ inputs, env, client, team_id }) =>
     runStep(async () => {
-      const comment = inputs.comment.trim();
-      if (!comment) throw new StepError("Comment is empty.");
+      const commentIn = inputs.comment.trim();
+      if (!commentIn) throw new StepError("Comment is empty.");
+      const commentText = parseSlackText(commentIn);
+      const mentioned = userIds(commentText);
       const sc = await connect(env.SHORTCUT_API_TOKEN, "comment-write");
       const storyId = parseStoryRef(inputs.story, sc.workspace.slug);
-      const by = inputs.posted_by
-        ? await slackUser(client, inputs.posted_by)
-        : undefined;
+      const [by, members, mentionedUsers] = await Promise.all([
+        inputs.posted_by ? slackUser(client, inputs.posted_by) : undefined,
+        mentioned.length ? sc.list("members") : [],
+        findSlackUsers(client, mentioned),
+      ]);
+      const comment = toMarkdown(
+        commentText,
+        peopleFor(mentionedUsers, members),
+        team_id,
+      );
       // v4 lets only admins set author_id, so attribution goes in the text.
       const text = by
         ? `${comment}\n\n_Posted from Slack by ${by.name}_`

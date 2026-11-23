@@ -25,7 +25,7 @@ export type FakeWorkspace = {
     workflows?: number[];
   }[];
   projects?: { id: number; name: string; workflow?: number }[];
-  members?: { id: string; email: string | null }[];
+  members?: { id: string; email: string | null; mention_name: string }[];
   customFields?: {
     id: string;
     name: string;
@@ -189,9 +189,10 @@ function forAjv(node: unknown): unknown {
 
 export async function fakeShortcut(
   ws: FakeWorkspace,
-): Promise<Disposable & { sent: Sent[] }> {
+): Promise<Disposable & { sent: Sent[]; slackLookups: string[] }> {
   const spec = await loadContract();
   const sent: Sent[] = [];
+  const slackLookups: string[] = [];
   const violations: string[] = [];
 
   const workflowById = (id: number) => {
@@ -248,6 +249,7 @@ export async function fakeShortcut(
       entity_type: "member",
       id: m.id,
       email_address: m.email,
+      mention_name: m.mention_name,
       disabled: false,
     })),
     "/custom-fields": (ws.customFields ?? []).map((f) => ({
@@ -385,6 +387,7 @@ export async function fakeShortcut(
 
   const slack = (body: URLSearchParams): Response => {
     const id = body.get("user") ?? "";
+    slackLookups.push(id);
     const user = ws.slackUsers?.[id];
     return Response.json(
       user
@@ -427,6 +430,7 @@ export async function fakeShortcut(
 
   return {
     sent,
+    slackLookups,
     [Symbol.dispose]() {
       fetchStub.restore();
       if (violations.length) throw new Error(violations.join("\n"));

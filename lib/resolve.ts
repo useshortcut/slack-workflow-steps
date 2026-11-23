@@ -1,6 +1,7 @@
 import { StepError } from "./step.ts";
 import type { CustomField, Member, Project, Ref, Team } from "./shortcut.ts";
 import type { SlackUser } from "./slack.ts";
+import type { Person } from "./markup.ts";
 
 type Named = { id: string | number; name: string };
 
@@ -116,14 +117,28 @@ export function memberFor(
       `Slack has no email for <@${user.id}>, so they can't be matched to a Shortcut member. Choose someone else or leave ${field} empty.`,
     );
   }
-  const email = user.email.toLowerCase();
-  const member = members.find((m) => m.email_address?.toLowerCase() === email);
+  const member = findMember(members, user.email);
   if (!member) {
     throw new StepError(
       `No active Shortcut member has ${user.email} (<@${user.id}>) as their profile email. Other emails on a Shortcut account don't match. Change their Shortcut profile email, invite them, or leave ${field} empty.`,
     );
   }
   return member;
+}
+
+function findMember(members: Member[], email: string): Member | undefined {
+  const wanted = email.toLowerCase();
+  return members.find((m) => m.email_address?.toLowerCase() === wanted);
+}
+
+export function peopleFor(
+  users: SlackUser[],
+  members: Member[],
+): Map<string, Person> {
+  return new Map(users.map((u) => [u.id, {
+    name: u.name,
+    member: u.email ? findMember(members, u.email) : undefined,
+  }]));
 }
 
 export function priorityValue(

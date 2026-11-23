@@ -169,6 +169,8 @@ The code is laid out like this:
   Builder inputs and outputs, and runs the step.
 - `lib/shortcut.ts` is the only code that calls Shortcut.
 - `lib/resolve.ts` turns names into Shortcut IDs. It makes no network calls.
+- `lib/markup.ts` turns Slack message text into Shortcut text and story titles.
+  It makes no network calls.
 - `lib/slack.ts` reads a Slack user's name and email address.
 - `lib/step.ts` turns a failure into the error message Workflow Builder shows.
 

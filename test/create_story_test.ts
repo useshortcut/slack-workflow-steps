@@ -74,10 +74,46 @@ Deno.test("the title is the first sentence of the first line", async () => {
   assertEquals(body, { name: "Login fails on Safari", workflow_state_id: 500 });
 });
 
-Deno.test("an empty title is refused before any request", async () => {
-  const { result, sent } = await run({ title: "   " });
-  assertEquals(result, { error: "Title is empty." });
-  assertEquals(sent, []);
+Deno.test("an empty title is refused before posting", async () => {
+  for (const title of ["   ", "\n\n", ". Login fails"]) {
+    const { result, sent } = await run({ title });
+    assertEquals(result, { error: "Title is empty." }, title);
+    assertEquals(sent.map((r) => r.path), ["/whoami"], title);
+  }
+});
+
+Deno.test("Slack mentions and links become Shortcut text", async () => {
+  using shortcut = await fakeShortcut(acme);
+  await createStory(createContext({
+    inputs: {
+      title: "<@U_JO> can't log in. <@U_SAM> saw it too",
+      description:
+        "From <@U_JO> in <#C42|support>, cc <@U_PAT> <@U_BOT> <@U_GONE> <@U_JO>: <https://status.acme.com|status> &amp; logs",
+    },
+    env,
+    team_id: "T_ACME",
+  }));
+  assertEquals(shortcut.sent.at(-1)?.body, {
+    name: "@jo_park can't log in",
+    workflow_state_id: 500,
+    description:
+      `From [@jo\\_park](shortcutapp://members/${JO}) in [#support](https://slack.com/app_redirect?channel=C42&team=T_ACME), cc @Pat Kim @Deploy Bot <@U_GONE> [@jo\\_park](shortcutapp://members/${JO}): [status](https://status.acme.com) & logs`,
+  });
+  assertEquals(shortcut.slackLookups.sort(), [
+    "U_BOT",
+    "U_GONE",
+    "U_JO",
+    "U_PAT",
+    "U_SAM",
+  ]);
+});
+
+Deno.test("text without mentions doesn't list members", async () => {
+  const { sent } = await run({
+    title: "Login fails",
+    description: "See <https://status.acme.com>",
+  });
+  assertEquals(sent.map((r) => r.path), ["/whoami", "/stories"]);
 });
 
 Deno.test("description and type are sent as given", async () => {

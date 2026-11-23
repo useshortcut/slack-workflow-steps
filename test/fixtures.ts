@@ -56,9 +56,13 @@ export const acme: FakeWorkspace = {
     { id: 12, name: "Billing", workflow: 1 },
   ],
   members: [
-    { id: "11110000-0000-4000-8000-000000000003", email: null },
-    { id: JO, email: "jo@acme.com" },
-    { id: SAM, email: "sam@acme.com" },
+    {
+      id: "11110000-0000-4000-8000-000000000003",
+      email: null,
+      mention_name: "korey",
+    },
+    { id: JO, email: "jo@acme.com", mention_name: "jo_park" },
+    { id: SAM, email: "sam@acme.com", mention_name: "sam" },
   ],
   customFields: [
     {

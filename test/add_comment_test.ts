@@ -2,7 +2,7 @@ import { assertEquals } from "@std/assert";
 import { SlackFunctionTester } from "deno-slack-sdk/mod.ts";
 import addComment, { AddComment } from "../functions/add_comment.ts";
 import { fakeShortcut, type FakeWorkspace } from "./fake_shortcut.ts";
-import { acme, env } from "./fixtures.ts";
+import { acme, env, JO } from "./fixtures.ts";
 
 const { createContext } = SlackFunctionTester(AddComment);
 type Inputs = Parameters<typeof createContext>[0]["inputs"];
@@ -51,6 +51,22 @@ Deno.test("Posted by adds the Slack user's name to the text", async () => {
   });
   assertEquals(sent[1].body, {
     text: "Customer confirmed the fix\n\n_Posted from Slack by Jo Park_",
+  });
+});
+
+Deno.test("Slack mentions in the comment become Shortcut mentions", async () => {
+  const { result, sent } = await run({
+    story: "123",
+    comment: "Fixed for <@U_JO>, thanks <@U_GONE> &amp; <!here>",
+  });
+  assertEquals(sent.at(-1)?.body, {
+    text:
+      `Fixed for [@jo\\_park](shortcutapp://members/${JO}), thanks <@U_GONE> & @here`,
+  });
+  assertEquals(result, {
+    outputs: {
+      comment_url: "https://app.shortcut.com/acme/story/123#activity-9",
+    },
   });
 });
 

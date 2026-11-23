@@ -13,7 +13,11 @@ export type Team = {
   default_workflow: Ref | null;
 };
 export type Project = { id: number; name: string; workflow: Ref | null };
-export type Member = { id: string; email_address: string | null };
+export type Member = {
+  id: string;
+  email_address: string | null;
+  mention_name: string;
+};
 export type CustomField = {
   id: string;
   canonical_name: string | null;

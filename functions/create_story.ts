@@ -1,12 +1,19 @@
 import { DefineFunction, Schema, SlackFunction } from "deno-slack-sdk/mod.ts";
 import { connect } from "../lib/shortcut.ts";
 import { runStep, StepError, trimmed } from "../lib/step.ts";
-import { slackUser } from "../lib/slack.ts";
-import { storyTitle } from "../lib/markup.ts";
+import { findSlackUsers, slackUser } from "../lib/slack.ts";
+import {
+  parseSlackText,
+  storyTitle,
+  toMarkdown,
+  toPlainText,
+  userIds,
+} from "../lib/markup.ts";
 import {
   checkTeamWorkflow,
   memberFor,
   parseStateInput,
+  peopleFor,
   pickOne,
   priorityValue,
   teamAliases,
@@ -29,7 +36,8 @@ export const CreateStory = DefineFunction({
       description: {
         type: Schema.types.string,
         title: "Description",
-        description: "Markdown.",
+        description:
+          "Markdown. Slack mentions, channels, and links become Shortcut mentions and links.",
       },
       story_type: {
         type: Schema.types.string,
@@ -90,10 +98,14 @@ export const CreateStory = DefineFunction({
 
 export default SlackFunction(
   CreateStory,
-  ({ inputs, env, client }) =>
+  ({ inputs, env, client, team_id }) =>
     runStep(async () => {
-      const title = storyTitle(inputs.title);
-      if (!title) throw new StepError("Title is empty.");
+      const titleText = parseSlackText(inputs.title);
+      const descriptionIn = trimmed(inputs.description);
+      const descriptionText = descriptionIn
+        ? parseSlackText(descriptionIn)
+        : [];
+      const mentioned = userIds([...titleText, ...descriptionText]);
       const teamIn = trimmed(inputs.team);
       const projectIn = trimmed(inputs.project);
       const stateIn = trimmed(inputs.workflow_state);
@@ -102,16 +114,28 @@ export default SlackFunction(
 
       const sc = await connect(env.SHORTCUT_API_TOKEN, "story-write");
       const state = stateIn ? parseStateInput(stateIn) : undefined;
-      const [teams, projects, workflows, members, fields, owner, requester] =
-        await Promise.all([
-          teamIn ? sc.list("teams") : [],
-          projectIn ? sc.list("projects") : [],
-          state?.workflow ? sc.list("workflows") : [],
-          ownerId || requesterId ? sc.list("members") : [],
-          priorityIn ? sc.list("custom-fields") : [],
-          ownerId ? slackUser(client, ownerId) : undefined,
-          requesterId ? slackUser(client, requesterId) : undefined,
-        ]);
+      const [
+        teams,
+        projects,
+        workflows,
+        members,
+        fields,
+        owner,
+        requester,
+        mentionedUsers,
+      ] = await Promise.all([
+        teamIn ? sc.list("teams") : [],
+        projectIn ? sc.list("projects") : [],
+        state?.workflow ? sc.list("workflows") : [],
+        ownerId || requesterId || mentioned.length ? sc.list("members") : [],
+        priorityIn ? sc.list("custom-fields") : [],
+        ownerId ? slackUser(client, ownerId) : undefined,
+        requesterId ? slackUser(client, requesterId) : undefined,
+        findSlackUsers(client, mentioned),
+      ]);
+      const people = peopleFor(mentionedUsers, members);
+      const title = storyTitle(toPlainText(titleText, people));
+      if (!title) throw new StepError("Title is empty.");
 
       const where = `Shortcut workspace "${sc.workspace.name}"`;
       const team = teamIn
@@ -142,7 +166,9 @@ export default SlackFunction(
       const story = await sc.createStory({
         name: title,
         workflow_state_id: stateId,
-        description: trimmed(inputs.description),
+        description: descriptionIn
+          ? toMarkdown(descriptionText, people, team_id)
+          : undefined,
         story_type: inputs.story_type,
         team_id: team?.id,
         project_id: project?.id,

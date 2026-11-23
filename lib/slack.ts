@@ -26,3 +26,14 @@ export async function slackUser(
     email: res.user.profile.email ?? null,
   };
 }
+
+/** Mentions are best effort, so a user Slack can't return is left out. */
+export async function findSlackUsers(
+  client: SlackUsers,
+  ids: string[],
+): Promise<SlackUser[]> {
+  const users = await Promise.all(
+    ids.map((id) => slackUser(client, id).catch(() => undefined)),
+  );
+  return users.filter((u) => u !== undefined);
+}
